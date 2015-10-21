@@ -1,151 +1,151 @@
-age,sex,race
-17,F,American Indian
-13,F,Pacific Islander
-17,M,Asian
-17,M,Pacific Islander
-15,F,Pacific Islander
-15,M,Pacific Islander
-16,F,American Indian
-15,M,Pacific Islander
-16,M,White
-14,F,Asian
-15,F,Asian
-14,F,Pacific Islander
-14,F,American Indian
-17,F,White
-13,M,American Indian
-17,F,White
-14,F,White
-15,F,Black
-14,F,Pacific Islander
-15,F,Asian
-13,F,Asian
-15,M,Pacific Islander
-15,M,Pacific Islander
-16,F,Black
-16,F,White
-15,M,American Indian
-17,M,American Indian
-14,M,White
-13,F,American Indian
-16,F,Asian
-15,M,Asian
-14,F,Asian
-17,F,Black
-13,M,Black
-17,M,Asian
-16,M,American Indian
-17,M,Asian
-16,M,Black
-14,F,American Indian
-13,M,Asian
-16,M,Pacific Islander
-16,M,White
-13,F,Asian
-15,F,White
-15,F,Black
-16,M,Asian
-14,F,Pacific Islander
-16,M,Pacific Islander
-17,F,White
-13,F,Asian
-14,M,Asian
-16,F,Black
-17,M,White
-14,F,Black
-16,F,Asian
-14,F,White
-17,F,White
-16,F,Asian
-14,F,White
-13,F,White
-17,M,Pacific Islander
-16,F,Black
-13,M,American Indian
-13,F,Pacific Islander
-17,M,American Indian
-16,M,White
-14,F,Asian
-16,M,Black
-15,M,Asian
-17,M,Pacific Islander
-15,M,Pacific Islander
-16,M,Asian
-16,M,Pacific Islander
-17,F,Black
-16,M,Pacific Islander
-17,F,American Indian
-16,M,Black
-13,F,American Indian
-15,M,White
-13,F,White
-17,M,Pacific Islander
-17,F,Pacific Islander
-13,F,American Indian
-17,F,Pacific Islander
-14,F,White
-17,F,Black
-14,F,American Indian
-15,F,Asian
-16,M,Black
-14,F,Asian
-16,F,American Indian
-17,F,Asian
-15,F,Pacific Islander
-14,F,Pacific Islander
-17,F,White
-15,M,American Indian
-15,F,Asian
-17,F,American Indian
-15,F,Black
-15,F,American Indian
-15,F,Pacific Islander
-13,F,Asian
-13,F,Black
-14,F,White
-14,M,Asian
-16,F,White
-14,F,Black
-15,F,Asian
-14,F,Black
-14,F,Black
-15,F,Asian
-17,M,White
-17,M,American Indian
-15,M,Black
-17,M,Black
-13,F,White
-16,F,Black
-17,F,Asian
-13,F,White
-15,M,White
-17,M,Asian
-14,F,White
-16,M,White
-16,M,White
-14,M,Pacific Islander
-16,M,Asian
-13,M,Pacific Islander
-16,M,Asian
-17,M,Pacific Islander
-16,M,Asian
-17,M,Black
-13,F,American Indian
-14,M,White
-13,F,White
-14,F,Asian
-17,M,American Indian
-16,M,Asian
-13,F,White
-14,F,White
-16,M,White
-14,M,Black
-15,M,Pacific Islander
-16,M,Pacific Islander
-14,F,Pacific Islander
-14,M,White
-17,M,American Indian
-13,F,Black
-14,M,American Indian
-15,F,Asian
-16,M,American Indian
+age,sex,race,salary
+14,F,Pacific Islander,">=$10,000"
+13,F,White,">=$10,000"
+17,F,Pacific Islander,">=$10,000"
+17,F,Pacific Islander,"<$10,000"
+15,M,Asian,"<$10,000"
+13,F,Asian,"<$10,000"
+14,F,White,"<$10,000"
+15,M,Asian,"<$10,000"
+16,F,Pacific Islander,">=$10,000"
+15,M,Asian,"<$10,000"
+15,M,White,"<$10,000"
+13,M,Asian,"<$10,000"
+17,M,American Indian,">=$10,000"
+17,M,Asian,"<$10,000"
+16,M,White,">=$10,000"
+17,F,White,">=$10,000"
+14,M,American Indian,"<$10,000"
+14,M,White,"<$10,000"
+17,F,Black,">=$10,000"
+14,M,Black,">=$10,000"
+14,F,White,"<$10,000"
+17,F,Pacific Islander,"<$10,000"
+16,F,Asian,"<$10,000"
+15,M,American Indian,">=$10,000"
+17,F,Black,"<$10,000"
+14,M,White,">=$10,000"
+17,M,Black,">=$10,000"
+16,M,White,"<$10,000"
+16,F,White,"<$10,000"
+13,F,Black,"<$10,000"
+17,F,Black,"<$10,000"
+15,M,Asian,"<$10,000"
+17,M,Pacific Islander,"<$10,000"
+17,F,American Indian,">=$10,000"
+13,M,Black,">=$10,000"
+15,M,American Indian,">=$10,000"
+17,M,American Indian,">=$10,000"
+13,F,American Indian,">=$10,000"
+15,M,Asian,"<$10,000"
+14,F,White,">=$10,000"
+14,M,Asian,"<$10,000"
+15,M,Asian,">=$10,000"
+15,M,American Indian,">=$10,000"
+16,M,Pacific Islander,"<$10,000"
+15,F,Pacific Islander,">=$10,000"
+14,F,Asian,"<$10,000"
+14,M,Asian,"<$10,000"
+14,F,Pacific Islander,"<$10,000"
+13,F,Pacific Islander,">=$10,000"
+15,F,Pacific Islander,">=$10,000"
+16,M,White,"<$10,000"
+17,F,Asian,">=$10,000"
+15,F,Black,">=$10,000"
+16,F,American Indian,">=$10,000"
+15,F,Black,"<$10,000"
+17,F,American Indian,">=$10,000"
+15,M,American Indian,"<$10,000"
+17,M,Black,">=$10,000"
+13,F,Asian,">=$10,000"
+17,F,Asian,"<$10,000"
+17,M,Black,"<$10,000"
+15,F,White,">=$10,000"
+17,M,White,"<$10,000"
+15,F,White,">=$10,000"
+17,F,Asian,">=$10,000"
+13,M,Pacific Islander,">=$10,000"
+16,F,Black,">=$10,000"
+16,M,Pacific Islander,"<$10,000"
+13,M,White,"<$10,000"
+17,M,Pacific Islander,"<$10,000"
+14,F,Black,">=$10,000"
+14,F,Pacific Islander,">=$10,000"
+17,M,Black,">=$10,000"
+17,F,Black,">=$10,000"
+14,M,Pacific Islander,">=$10,000"
+17,M,Black,">=$10,000"
+13,F,Asian,"<$10,000"
+13,F,Asian,"<$10,000"
+15,M,Pacific Islander,"<$10,000"
+17,M,American Indian,">=$10,000"
+15,F,Black,"<$10,000"
+14,F,American Indian,">=$10,000"
+14,F,Black,">=$10,000"
+16,F,Asian,"<$10,000"
+15,F,Pacific Islander,"<$10,000"
+15,M,Asian,">=$10,000"
+17,M,White,">=$10,000"
+14,F,White,"<$10,000"
+14,F,White,"<$10,000"
+16,M,Asian,"<$10,000"
+14,M,Black,"<$10,000"
+17,F,American Indian,"<$10,000"
+14,M,Asian,"<$10,000"
+14,F,Asian,">=$10,000"
+17,F,Asian,">=$10,000"
+14,M,Pacific Islander,"<$10,000"
+17,M,Pacific Islander,">=$10,000"
+15,F,Asian,"<$10,000"
+14,F,Black,">=$10,000"
+17,M,Pacific Islander,"<$10,000"
+17,F,American Indian,"<$10,000"
+17,F,Asian,">=$10,000"
+17,F,Asian,"<$10,000"
+17,M,American Indian,">=$10,000"
+17,F,Black,">=$10,000"
+14,F,Asian,">=$10,000"
+14,F,Black,">=$10,000"
+14,M,Black,"<$10,000"
+13,F,American Indian,">=$10,000"
+17,F,Asian,">=$10,000"
+15,F,Black,">=$10,000"
+16,M,White,">=$10,000"
+15,F,Pacific Islander,">=$10,000"
+17,F,White,"<$10,000"
+16,M,Pacific Islander,">=$10,000"
+13,M,Pacific Islander,"<$10,000"
+15,M,Pacific Islander,">=$10,000"
+15,F,Pacific Islander,">=$10,000"
+16,F,Pacific Islander,"<$10,000"
+16,M,Pacific Islander,">=$10,000"
+14,F,Pacific Islander,">=$10,000"
+17,F,Pacific Islander,">=$10,000"
+15,M,Asian,"<$10,000"
+15,M,White,"<$10,000"
+15,M,American Indian,"<$10,000"
+14,F,Pacific Islander,"<$10,000"
+16,M,Pacific Islander,"<$10,000"
+14,F,American Indian,">=$10,000"
+14,F,Black,"<$10,000"
+16,F,Asian,">=$10,000"
+14,M,Pacific Islander,"<$10,000"
+15,M,Asian,"<$10,000"
+17,M,Pacific Islander,"<$10,000"
+13,F,Pacific Islander,">=$10,000"
+16,M,Asian,">=$10,000"
+13,F,Black,"<$10,000"
+14,M,Asian,">=$10,000"
+15,M,American Indian,">=$10,000"
+13,F,White,">=$10,000"
+14,M,White,">=$10,000"
+13,M,White,"<$10,000"
+17,M,White,">=$10,000"
+16,F,American Indian,">=$10,000"
+15,M,American Indian,">=$10,000"
+13,F,White,"<$10,000"
+16,M,Pacific Islander,">=$10,000"
+13,F,White,">=$10,000"
+17,M,Asian,">=$10,000"
+14,F,Pacific Islander,"<$10,000"
+16,M,Asian,"<$10,000"
