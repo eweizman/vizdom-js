@@ -1,0 +1,32 @@
+<html>
+<head>
+	<title>Graph Select</title>
+	<script src="http://vega.github.io/vega-editor/vendor/d3.min.js"></script>
+	<script src="http://vega.github.io/vega-editor/vendor/vega.min.js"></script>
+	<script src="//code.jquery.com/jquery-1.10.2.js"></script>
+	<script src="//code.jquery.com/ui/1.11.4/jquery-ui.js"></script>
+	<link rel="stylesheet" type="text/css" href="style/index.css">
+</head>
+<body>
+	<div id="vis"></div>
+	<script type="text/javascript">
+		vg.parse.spec("data/vega_example_bar.JSON", function(chart) { 
+			vchart = chart({el:"#vis"}).update(); 
+			vchart.on("mousedown", function(evt, item) {
+				if (item != null) {
+					console.log(evt);
+					console.log(item);
+				}
+				
+			});
+			vchart.on("mouseup", function(evt, item) {
+				if (item != null) {
+					console.log(evt);
+				//console.log(item.datum);
+				}
+				
+			})
+		});
+	</script>
+</body>
+</html>

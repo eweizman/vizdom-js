@@ -1,0 +1,102 @@
+<html>
+<head>
+    <title>NVD3 Example Test</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.6/d3.min.js" charset="utf-8"></script>
+        <link href="nv.d3.css" rel="stylesheet">
+    <script src="nv.d3.js"></script>
+</head>
+<body>
+<div id="chart1">
+    <svg></svg>
+</div>
+
+<div id="chart2">
+    <svg></svg>
+</div>
+
+<script>
+
+var csv = "data/fakedata.csv";
+var charts  = {"chart1":"", "chart2":""};
+d3.csv(csv, function(error, data) {
+    keys = d3.keys(data[0]);
+    for (i in keys) {
+        for (chartId in charts) {
+            var key = keys[i];
+            var button = document.createElement("button");
+            button.appendChild(document.createTextNode(key));
+            button.setAttribute("type", "button");
+            button.setAttribute("onclick", "createGraph(\""+chartId+"\",\""+key+"\")");
+            var chart = document.getElementById(chartId);
+            chart.appendChild(button);
+        }
+    }
+});
+
+function createGraph(chartId, key) {
+    createGraphFromKey(key, '#'+chartId+" svg", {});
+    charts[chartId] = key;
+}
+
+    function createGraphFromKey(key, chartNum, filterKeys) {
+        d3.csv(csv, function(error, data){
+            var group = d3.nest()
+            .key(function(d) {return d[key]})
+            .rollup(function(d) {
+                return d3.sum(d, function(g) {
+                    for (var key in filterKeys) {
+                        if (g[key] != filterKeys[key]) {
+                            return 0;
+                        }
+                    }
+                    return 1
+                });
+            }).entries(data);
+
+            group.forEach(function(d) {
+                d.label = d.key;
+                d.value = d.values;
+            })
+
+            var exampleData = [
+            {
+                key: "totals",
+                values: group
+            }
+            ];
+
+            nv.addGraph(function() {
+                var width = 400, height = 300;
+                var chart = nv.models.discreteBarChart()
+                .x(function(d) { return d.label })
+                .y(function(d) { return d.value })
+                .staggerLabels(true)
+                .showValues(true)
+                .duration(250)
+                .width(width)
+                .height(height)
+                ;
+                d3.select(chartNum)
+                .datum(exampleData)
+                .call(chart)
+                .style({'width':width, 'height':height});
+                nv.utils.windowResize(chart.update);
+                return chart;
+            }, function () {
+                d3.selectAll(chartNum + " .nv-bar").on('mousedown', function(d) {
+                if (chartNum.indexOf('1') > -1) {
+                    filter = {};
+                    filter[key] = d.key;
+                    if (charts["chart2"] != "") {
+                        createGraphFromKey(charts["chart2"], '#chart2 svg', filter);
+                    }
+                    
+                }
+                
+            });
+        });
+        });
+    }
+</script>
+</body>
+</html>
