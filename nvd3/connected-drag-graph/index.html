@@ -1,22 +1,22 @@
 <html>
 <head>
-    <title>NVD3 Example Test</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.6/d3.min.js" charset="utf-8"></script>
-        <link href="nv.d3.css" rel="stylesheet">
-    <script src="nv.d3.js"></script>
+<title>NVD3 Example Test</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.6/d3.min.js" charset="utf-8"></script>
+    <link href="nv.d3.css" rel="stylesheet">
+<script src="nv.d3.js"></script>
 </head>
 <body id="body">
 
-    <div id="header_buttons"></div>
+<div id="header_buttons"></div>
 
 <script>
 
 Object.size = function(obj) {
-    var size = 0, key;
-    for (key in obj) {
-        if (obj.hasOwnProperty(key)) size++;
-    }
-    return size;
+var size = 0, key;
+for (key in obj) {
+    if (obj.hasOwnProperty(key)) size++;
+}
+return size;
 };
 
 addHeaderSelector();
@@ -24,130 +24,207 @@ var charts  = {};
 var csv = "data/fakedata.csv";
 
 function addHeaderSelector() {
-    var csv = "data/fakedata.csv";
-    d3.csv(csv, function(error, data) {
-    keys = d3.keys(data[0]);
-    for (i in keys) {
-            var key = keys[i];
-            var button = document.createElement("button");
-            button.appendChild(document.createTextNode(key));
-            button.setAttribute("type", "button");
-            button.setAttribute("draggable", "true");
-            button.setAttribute("ondragstart", "drag(event)");
-            var div = document.getElementById("header_buttons");
-            div.appendChild(button);
-    }
-    document.body.addEventListener('drop', drop, false);
-    document.body.addEventListener('dragover', dragOver, false);
-    });
+var csv = "data/fakedata.csv";
+d3.csv(csv, function(error, data) {
+keys = d3.keys(data[0]);
+for (i in keys) {
+        var key = keys[i];
+        var button = document.createElement("button");
+        button.appendChild(document.createTextNode(key));
+        button.setAttribute("type", "button");
+        button.setAttribute("draggable", "true");
+        button.setAttribute("ondragstart", "drag(event)");
+        var div = document.getElementById("header_buttons");
+        div.appendChild(button);
+}
+document.body.addEventListener('drop', drop, false);
+document.body.addEventListener('dragover', dragOver, false);
+});
 }
 
 function newGraph(x,y,key) {
-    var chartId = "chart" + (Object.size(charts) + 1);
-    charts[chartId] = "";
-    var newGraphDiv = document.createElement("div");
-    newGraphDiv.setAttribute("id", chartId);
+var chartId = "chart" + (Object.size(charts) + 1);
+charts[chartId] = "";
+var newGraphDiv = document.createElement("div");
+newGraphDiv.setAttribute("id", chartId);
 
-    newGraphDiv.setAttribute("style", "position:absolute; TOP:"+y+"px; LEFT:"+x+"px");
+newGraphDiv.setAttribute("style", "position:absolute; TOP:"+y+"px; LEFT:"+x+"px");
 
-    //var svg = document.createElement("svg");
-    var svg = document.createElementNS('http://www.w3.org/2000/svg','svg');
-    svg.setAttribute('xmlns:xlink','http://www.w3.org/1999/xlink');
-    newGraphDiv.appendChild(svg);
+var svg = document.createElementNS('http://www.w3.org/2000/svg','svg');
+svg.setAttribute('xmlns:xlink','http://www.w3.org/1999/xlink');
+newGraphDiv.appendChild(svg);
 
-    var body = document.getElementById("body");
-    var newGraphButton = document.getElementById("newGraphButton");
+newGraphDiv.setAttribute("draggable", "true");
+newGraphDiv.setAttribute("ondragstart", "dragChart(event)");
+newGraphDiv.addEventListener("drop", dropChart, false);
 
-    body.insertBefore(newGraphDiv, newGraphButton);
+var body = document.getElementById("body");
+var newGraphButton = document.getElementById("newGraphButton");
 
-    createGraph(chartId, key);
+body.insertBefore(newGraphDiv, newGraphButton);
+
+createGraph(chartId, key);
 }
 
 function allowDrop(ev) {
-    ev.preventDefault();
+ev.preventDefault();
 }
 
 function dragOver(ev) {
-    ev.preventDefault();
+ev.preventDefault();
 }
 
 function drag(ev) {
-    console.log(ev.target.firstChild.nodeValue);
+    ev.dataTransfer.setData("type", "newGraph");
     ev.dataTransfer.setData("text", ev.target.firstChild.nodeValue);
 }
 
+function dragChart(ev) {
+    //console.log(ev);
+    //var chart = ev.targetTouches[0];
+    //console.log(chart);
+    ev.dataTransfer.setData("type", "dragChart");
+    ev.dataTransfer.setData("chartId", ev.target.id);
+}
+
 function drop(ev) {
+ev.preventDefault();
+var x = ev.pageX, y = ev.pageY;
+
+console.log("dropdocument");
+console.log(ev);
+
+switch(ev.dataTransfer.getData("type")) {
+    case "newGraph" :
+        var data = ev.dataTransfer.getData("text");
+        newGraph(x, y, data);
+        break;
+    case "dragChart" :
+        var chartId = ev.dataTransfer.getData("chartId");
+        
+        //var chart = document.getElementById(chartId);
+        //chart.setAttribute("style", "position:absolute; TOP:"+y+"px; LEFT:"+x+"px");
+        //console.log(ev);
+        break;
+    default :
+        break;
+}
+}
+
+function dropChart(ev) {
     ev.preventDefault();
-    var data = ev.dataTransfer.getData("text");
+    console.log("drop chart");
     console.log(ev);
-    newGraph(ev.clientX, ev.clientY, data);
+    var chartId = ev.dataTransfer.getData("chartId");
+    switch(ev.dataTransfer.getData("type")) {
+    case "dragChart" :
+        ev.dataTransfer.setData("type", "");
+        connectGraph();
+        break;
+    default :
+        break;
+}
+}
+
+function connectGraph() {
+    console.log("connectGraph");
 }
 
 function createGraph(chartId, key) {
-    createGraphFromKey(key, '#'+chartId+" svg", {});
-    charts[chartId] = key;
+createGraphFromKey(key, chartId, {});
+charts[chartId] = key;
 }
 
-    function createGraphFromKey(key, chartNum, filterKeys) {
-        d3.csv(csv, function(error, data){
-            var group = d3.nest()
-            .key(function(d) {return d[key]})
-            .rollup(function(d) {
-                return d3.sum(d, function(g) {
-                    for (var key in filterKeys) {
-                        if (g[key] != filterKeys[key]) {
-                            return 0;
-                        }
+function createGraphFromKey(key, chartId, filterKeys) {
+    var chartNum = '#'+chartId+" svg";
+    d3.csv(csv, function(error, data){
+        var group = d3.nest()
+        .key(function(d) {return d[key]})
+        .rollup(function(d) {
+            return d3.sum(d, function(g) {
+                for (var key in filterKeys) {
+                    if (g[key] != filterKeys[key]) {
+                        return 0;
                     }
-                    return 1
-                });
-            }).entries(data);
-
-            group.forEach(function(d) {
-                d.label = d.key;
-                d.value = d.values;
-            })
-
-            var exampleData = [
-            {
-                key: "totals",
-                values: group
-            }
-            ];
-
-            nv.addGraph(function() {
-                var width = 400, height = 300;
-                var chart = nv.models.discreteBarChart()
-                .x(function(d) { return d.label })
-                .y(function(d) { return d.value })
-                .staggerLabels(true)
-                .showValues(true)
-                .duration(250)
-                .width(width)
-                .height(height)
-                ;
-                d3.select(chartNum)
-                .datum(exampleData)
-                .call(chart)
-                .style({'width':width, 'height':height});
-                nv.utils.windowResize(chart.update);
-                return chart;
-            }, function () {
-                d3.selectAll(chartNum + " .nv-bar").on('mousedown', function(d) {
-                if (chartNum.indexOf('1') > -1) {
-                    filter = {};
-                    filter[key] = d.key;
-                    for (chart in charts) {
-                        if (chart != "chart1" && charts[chart] != "") {
-                            createGraphFromKey(charts[chart], '#'+chart+' svg', filter);
-                        }
-                    }                    
                 }
-                
+                return 1
             });
-        });
-        });
-    }
+        }).entries(data);
+
+        group.forEach(function(d) {
+            d.label = d.key;
+            d.value = d.values;
+        })
+
+        var exampleData = [
+        {
+            key: "totals",
+            values: group
+        }
+        ];
+
+        nv.addGraph(function() {
+            var width = 400, height = 300;
+            var chart = nv.models.discreteBarChart()
+            .x(function(d) { return d.label })
+            .y(function(d) { return d.value })
+            .staggerLabels(true)
+            .showValues(true)
+            .duration(250)
+            .width(width)
+            .height(height)
+            ;
+            d3.select(chartNum)
+            .datum(exampleData)
+            .call(chart)
+            .style({'width':width, 'height':height});
+
+            function titleDrag(d) {
+                //console.log(d);
+                var x = d3.event.x;
+                var y = d3.event.y;
+                //console.log(chartId);
+                var chartDiv = document.getElementById(chartId);
+                var top = chartDiv.offsetTop;
+                var left = chartDiv.offsetLeft;
+                console.log(chartDiv.getAttribute("style"));
+                console.log(chartDiv.offsetTop);
+                chartDiv.setAttribute("style", "position:absolute; TOP:"+ (top + y)+"px; LEFT:"+(left + x)+"px");
+            }
+
+            var drag = d3.behavior.drag()
+            .on("drag", titleDrag);
+
+            d3.select(chartNum)
+            .append("text")
+            .attr("x", width/2)
+            .attr("y", 10)
+            .attr("text-anchor", "middle")
+            .attr("class", "chart-title")
+            .text("test")
+            .call(drag);
+
+            nv.utils.windowResize(chart.update);
+            return chart;
+        }, function (chart) {
+            //var chart = d3.selectAll(chartNum + " .nv-bar");
+            //console.log(chart);
+            //console.log(tchart);
+            /*d3.selectAll(chartNum + " .nv-bar").on('mousedown', function(d) {
+            if (chartNum.indexOf('1') > -1) {
+                filter = {};
+                filter[key] = d.key;
+                for (chart in charts) {
+                    if (chart != "chart1" && charts[chart] != "") {
+                        createGraphFromKey(charts[chart], '#'+chart+' svg', filter);
+                    }
+                }                    
+            }
+            
+        });*/
+    });
+    });
+}
 
 </script>
 </body>
