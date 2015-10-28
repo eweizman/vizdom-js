@@ -121,6 +121,10 @@
             return;
         }
         chartConnections[source].push(dest);
+        if (source in selected) {
+
+            filterDownstreamChart(source, dest, selected[source].key, selected[source].val, true);
+        }
     }
 
     function createGraph(chartId, key) {
@@ -201,20 +205,27 @@
                 return chart;
             }, function () {
                 d3.selectAll(chartNum + " .nv-bar").on('mousedown', function(d) {
-                    //Determine whether the bar is being selected or deselected
-                    var isSelected;
-                    if (chartId in selected) {
-                        isSelected = selected[chartId].val != d.key;
-                    } else {
-                        isSelected = true;
-                    }
-                    console.log(isSelected);
+                    onBarSelection(chartId, this, key, d.key);
 
-                    deselectSelected(chartId);
+                });
+            });
+});
+}
 
-                    if (isSelected) {
+function onBarSelection(chartId, bar, key, val) {
+        //Determine whether the bar is being selected or deselected
+        var isSelected;
+        if (chartId in selected) {
+            isSelected = selected[chartId].val != val;
+        } else {
+            isSelected = true;
+        }
+
+        deselectSelected(chartId);
+
+        if (isSelected) {
                         //Return previously selected bar to red color
-                        emphasizeSelectedBar(chartId, this, key, d.key);
+                        emphasizeSelectedBar(chartId, bar, key, val);
                     } else {
                         delete selected[chartId];
                     }
@@ -222,45 +233,95 @@
                     //Find all those charts downstream to current chart
                     for (charti in chartConnections[chartId]) {
                         var chartId2 = chartConnections[chartId][charti];
-                        var chart2Key = charts[chartId2];
-
-                        //Add currently selected item to filter of downstream chart
-                        var filter;
-                        if (!(chartId2 in filters)) {
-                            filters[chartId2] = {};
-                        }
-                        filter = filters[chartId2];
-                        if (isSelected && filter[key] == d.key) {
-                            return;
-                        }
-                        if (isSelected) {
-                            filter[key] = d.key;
-                        } else {
-                            delete filter[key];
-                        }
-                        
-                        filter = filters[chartId2];
-                        if (chart2Key != "") {
-                           createGraphFromKey(chart2Key, chartId2, filter);
-                       }
+                        filterDownstreamChart(chartId, chartId2, key, val, isSelected);
                    }
+               }
 
-               });
-            });
-        });
-    }
+            function filterDownstreamChart(chartId, chartId2, key, val, isSelected) {
+                //var chart2Key = charts[chartId2];
 
-    function emphasizeSelectedBar(chartId, bar, key, val) {
-        selected[chartId] = {key:key, val:val, bar:bar, color:d3.select(bar).style("fill")};
-        d3.select(bar).style("fill", "red");
-    }
+                //Add currently selected item to filter of downstream chart
+                var filter;
+                if (!(chartId2 in filters)) {
+                    filters[chartId2] = {};
+                }
+                filter = filters[chartId2];
 
-    function deselectSelected(chartId) {
-        if (chartId in selected) {
-            d3.select(selected[chartId].bar).style("fill", selected[chartId].color);
-        }
-    }
+                //prevent infinite loops if charts are parents and children of each other
+                if (isSelected && filter[key] == val) {
+                    //return;
+                }
+                if (isSelected) {
+                    propogateFiltersDownward(chartId, chartId2, key, val);
+                } else {
+                    propogateDeselectionDownwards(chartId2, key);
+                }
 
-</script>
-</body>
-</html>
+                propogateGraphCreationDownwards(chartId2);
+                
+                /*filter = filters[chartId2];
+                if (chart2Key != "") {
+                   createGraphFromKey(chart2Key, chartId2, filter);
+               }*/
+            }
+
+            function propogateGraphCreationDownwards(chartId) {
+                for (var i=0;i<chartConnections[chartId].length;i++) {
+                    var chartId2 = chartConnections[chartId][i];
+                    propogateGraphCreationDownwards(chartId2);
+                }
+
+                var filter = filters[chartId];
+                var key = charts[chartId];
+                if (key != "") {
+                    createGraphFromKey(key, chartId, filter);
+                }
+            }
+
+            function propogateFiltersDownward(chartId, chartId2, key, val) {
+                if (!(chartId2 in filters)) {
+                    filters[chartId2] = {};
+                }
+                filter = filters[chartId2];
+
+                if (chartId == chartId2 || filter[key] == val) {
+                    return;
+                }
+
+                for (var i=0;i<chartConnections[chartId2].length;i++) {
+                    var chartId3 = chartConnections[chartId2][i];
+                    propogateFiltersDownward(chartId2, chartId3, key, val);
+                }
+
+                //make sure all filters that are applied to upstream chart get applied to downstream chart as well
+                for (var filterKey in filters[chartId]) {
+                    filter[filterKey] = filters[chartId][filterKey];
+                }
+                filters[chartId2][key] = val;
+            }
+
+            function propogateDeselectionDownwards(chartId, key) {
+                if (! chartId in filters || ! chartId in chartConnections) {
+                    return;
+                }
+                for (var i=0;i<chartConnections[chartId].length;i++) {
+                    var chartId2 = chartConnections[chartId][i];
+                    propogateDeselectionDownwards(chartId2, key);
+                }
+                delete filters[chartId][key];
+            }
+
+            function emphasizeSelectedBar(chartId, bar, key, val) {
+                selected[chartId] = {key:key, val:val, bar:bar, color:d3.select(bar).style("fill")};
+                d3.select(bar).style("fill", "red");
+            }
+
+            function deselectSelected(chartId) {
+                if (chartId in selected) {
+                    d3.select(selected[chartId].bar).style("fill", selected[chartId].color);
+                }
+            }
+
+            </script>
+        </body>
+        </html>
