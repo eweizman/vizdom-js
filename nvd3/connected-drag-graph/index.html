@@ -117,14 +117,28 @@
     }
 
     function connectGraph(source, dest) {
-        if (source == dest || chartConnections[source].indexOf(dest) > -1) {
+        if (source == dest || chartConnections[source].indexOf(dest) > -1 || detectLoop(source, dest)) {
             return;
         }
         chartConnections[source].push(dest);
         if (source in selected) {
-
             filterDownstreamChart(source, dest, selected[source].key, selected[source].val, true);
         }
+    }
+
+    function detectLoop(source,dest) {
+        if (source == dest) {
+            return true;
+        }
+        if (! dest in chartConnections) {
+            return false;
+        }
+        for (var i=0;i<chartConnections[dest].length;i++) {
+            if (detectLoop(source, chartConnections[dest][i])) {
+                return true;
+            }
+        }
+        return false;
     }
 
     function createGraph(chartId, key) {
@@ -246,6 +260,12 @@ function onBarSelection(chartId, bar, key, val) {
                     filters[chartId2] = {};
                 }
                 filter = filters[chartId2];
+
+                //console.log(chartId + chartId2 + key + val + filter);
+
+                /*if (chartId == chartId2 || filter[key] == val) {
+                    return;
+                }*/
 
                 //prevent infinite loops if charts are parents and children of each other
                 if (isSelected && filter[key] == val) {
