@@ -22,6 +22,8 @@ return size;
 addHeaderSelector();
 var charts  = {};
 var chartConnections = {};
+var filters = {};
+var selected = {};
 var csv = "data/fakedata.csv";
 
 function addHeaderSelector() {
@@ -119,27 +121,6 @@ function connectGraph(source, dest) {
         return;
     }
     chartConnections[source].push(dest);
-    /*d3.selectAll(source + + " .nv-bar").on('mousedown', function(d) {
-            /*if (chartNum.indexOf('1') > -1) {
-                filter = {};
-                filter[key] = d.key;
-                for (chart in charts) {
-                    if (chart != "chart1" && charts[chart] != "") {
-                        createGraphFromKey(charts[chart], '#'+chart+' svg', filter);
-                    }
-                }                    
-            }
-        });*/
-    /*d3.selectAll(chartNum + " .nv-bar").on('mousedown', function(d) {
-            if (chartNum.indexOf('1') > -1) {
-                filter = {};
-                filter[key] = d.key;
-                for (chart in charts) {
-                    if (chart != "chart1" && charts[chart] != "") {
-                        createGraphFromKey(charts[chart], '#'+chart+' svg', filter);
-                    }
-                }                    
-            }*/
 }
 
 function createGraph(chartId, key) {
@@ -216,25 +197,23 @@ function createGraphFromKey(key, chartId, filterKeys) {
             return chart;
         }, function () {
             d3.selectAll(chartNum + " .nv-bar").on('mousedown', function(d) {
-                filter = {};
-                filter[key] = d.key;
-                console.log(chartConnections[chartId]);
+                //filter = {};
+                //filter[key] = d.key;
+                //console.log(chartConnections[chartId]);
                 for (charti in chartConnections[chartId]) {
                     var chartId2 = chartConnections[chartId][charti];
                     var chart2Key = charts[chartId2];
+                    var filter;
+                    if (!(chartId2 in filters)) {
+                        filters[chartId2] = {};
+                    }
+                    filter = filters[chartId2];
+                    filter[key] = d.key;
+                    filter = filters[chartId2];
                     if (chart2Key != "") {
                          createGraphFromKey(chart2Key, chartId2, filter);
                     }
                 }
-            /*if (chartNum.indexOf('1') > -1) {
-                filter = {};
-                filter[key] = d.key;
-                for (chart in charts) {
-                    if (chart != "chart1" && charts[chart] != "") {
-                        createGraphFromKey(charts[chart], '#'+chart+' svg', filter);
-                    }
-                }                    
-            }*/
             
         });
     });
