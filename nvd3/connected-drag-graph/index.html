@@ -7,11 +7,25 @@
 </head>
 <body id="body">
 
-    <div id="header_buttons"></div>
+    <svg id="background_svg" style="position:fixed; top:0; left:0; height:100%; width:100%; pointer-events: none">
+        <defs>
+            <marker id="arrow" markerWidth="10" markerHeight="10" refx="0" refy="3" orient="auto" markerUnits="strokeWidth">
+                <path d="M0,0 L0,6 L9,3 z" />
+          </marker>
+      </defs>
 
-    <script>
+      <!--<line x1="295" y1="50" x2="95" y2="75" stroke="#000" stroke-width="2" marker-end="url(#arrow)" />--></svg>
 
-    Object.size = function(obj) {
+      <div id="header_buttons"></div>
+
+
+
+      <script>
+
+      var AND_FILTER = "and";
+      var OR_FILTER = "or";
+
+      Object.size = function(obj) {
         var size = 0, key;
         for (key in obj) {
             if (obj.hasOwnProperty(key)) size++;
@@ -21,16 +35,19 @@
 
     addHeaderSelector();
     var charts  = {};
-    var chartConnections = {};
+    var chartConnections = {}; // source -> dest map
+    var chartsConnected = {}; // dest -> source map
     var filters = {};
     var selected = {};
     var csv = "data/fakedata.csv";
+    //var setChartDivStyle = "padding-top:10px;border:1px solid black";
+    var setChartDivStyle = "border:1px solid black";
 
     function addHeaderSelector() {
         var csv = "data/fakedata.csv";
         d3.csv(csv, function(error, data) {
             keys = d3.keys(data[0]);
-            for (i in keys) {
+            for (i = 0;i<keys.length;i++) {
                 var key = keys[i];
                 var button = document.createElement("button");
                 button.appendChild(document.createTextNode(key));
@@ -49,13 +66,29 @@
         var chartId = "chart" + (Object.size(charts) + 1);
         charts[chartId] = "";
         chartConnections[chartId] = [];
+        chartsConnected[chartId] = [];
         var newGraphDiv = document.createElement("div");
         newGraphDiv.setAttribute("id", chartId);
 
-        newGraphDiv.setAttribute("style", "position:absolute; TOP:"+y+"px; LEFT:"+x+"px");
+        newGraphDiv.setAttribute("style", "position:absolute; TOP:"+y+"px; LEFT:"+x+"px;"+setChartDivStyle);
+
+        var filter = document.createElement("button");
+        filter.setAttribute("type", "button");
+        filter.appendChild(document.createTextNode(AND_FILTER));
+        filter.setAttribute("id", getFilterTypeButtonId(chartId));
+        filter.onclick = filterButtonPressed(chartId);
+
+        var deleteConnections = document.createElement("button");
+        deleteConnections.setAttribute("type", "button");
+        deleteConnections.appendChild(document.createTextNode("Remove Filters"));
+        deleteConnections.onclick = function(e) {
+            deleteFilters(chartId);
+        }
 
         var svg = document.createElementNS('http://www.w3.org/2000/svg','svg');
         svg.setAttribute('xmlns:xlink','http://www.w3.org/1999/xlink');
+        newGraphDiv.appendChild(filter);
+        //newGraphDiv.appendChild(deleteConnections);
         newGraphDiv.appendChild(svg);
 
         newGraphDiv.setAttribute("draggable", "true");
@@ -68,6 +101,25 @@
         body.insertBefore(newGraphDiv, newGraphButton);
 
         createGraph(chartId, key);
+    }
+
+    function filterButtonPressed(chartId) {
+        return function (e) {
+            getFilterTypeButton(chartId).firstChild.nodeValue = getFilterType(chartId) == AND_FILTER ? OR_FILTER : AND_FILTER;
+            refreshGraph(chartId);
+        }
+    }
+
+    function getFilterTypeButtonId(chartId) {
+        return "filterTypeButton" + chartId;
+    }
+
+    function getFilterTypeButton(chartId) {
+        return document.getElementById(getFilterTypeButtonId(chartId));
+    }
+
+    function getFilterType(chartId) {
+        return getFilterTypeButton(chartId).firstChild.nodeValue;
     }
 
     function allowDrop(ev) {
@@ -116,14 +168,57 @@
         }
     }
 
+    function chartMoved(chartId) {
+        for (var i = 0;i<chartConnections[chartId].length ; i++) {
+            makeArrowBetweenSourceAndDest(chartId, chartConnections[chartId][i]);
+        }
+        for (var i = 0;i<chartsConnected[chartId].length ; i++) {
+            makeArrowBetweenSourceAndDest(chartsConnected[chartId][i], chartId);
+        }
+    }
+
     function connectGraph(source, dest) {
         if (source == dest || chartConnections[source].indexOf(dest) > -1 || detectLoop(source, dest)) {
             return;
         }
         chartConnections[source].push(dest);
+        chartsConnected[dest].push(source);
         if (source in selected) {
             filterDownstreamChart(source, dest, selected[source].key, selected[source].val, true);
         }
+
+        makeArrowBetweenSourceAndDest(source, dest);
+    }
+
+    function makeArrowBetweenSourceAndDest(source, dest) {
+        var x1 = document.getElementById(source).offsetLeft;
+        var y1 = document.getElementById(source).offsetTop;
+        var x2 = document.getElementById(dest).offsetLeft;
+        var y2 = document.getElementById(dest).offsetTop;
+        var connectionArrow = getConnectionArrow(source, dest);
+        connectionArrow.setAttribute("x1", x1); //Create a path in SVG's namespace
+        connectionArrow.setAttribute("y1", y1);
+        connectionArrow.setAttribute("x2", x2);
+        connectionArrow.setAttribute("y2", y2);
+    }
+
+    // JSPlumb will likely be a prettier and easier way to do lines https://github.com/sporritt/jsplumb/
+    function getConnectionArrow(source, dest) {
+        var connectionArrow = document.getElementById(getArrowId(source, dest));
+        if (connectionArrow == null) {
+            var svg = document.getElementById("background_svg");
+            connectionArrow = document.createElementNS("http://www.w3.org/2000/svg", 'line');
+            connectionArrow.setAttribute("stroke", "#444");
+            connectionArrow.setAttribute("stroke-width", 1);
+            connectionArrow.setAttribute("marker-end", "url(#arrow)");
+            connectionArrow.setAttribute("id", getArrowId(source, dest));
+            svg.appendChild(connectionArrow);
+        }
+        return connectionArrow;
+    }
+
+    function getArrowId(source, dest) {
+        return source+dest+"connectionArrow";
     }
 
     function detectLoop(source,dest) {
@@ -146,6 +241,15 @@
         charts[chartId] = key;
     }
 
+    function refreshGraph(chartId) {
+        //IMPLEMENT
+        var filterKeys = filters[chartId];
+        if (filterKeys == undefined) {
+            filterKeys = {};
+        }
+        createGraphFromKey(charts[chartId], chartId, filterKeys);
+    }
+
     function createGraphFromKey(key, chartId, filterKeys) {
         var chartNum = '#'+chartId+" svg";
         d3.csv(csv, function(error, data){
@@ -153,12 +257,26 @@
             .key(function(d) {return d[key]})
             .rollup(function(d) {
                 return d3.sum(d, function(g) {
-                    for (var key in filterKeys) {
-                        if (g[key] != filterKeys[key]) {
-                            return 0;
-                        }
+                    var filterType = getFilterType(chartId);
+                    if (Object.size(filterKeys) == 0) {
+                        return 1;
                     }
-                    return 1
+                    if (filterType == AND_FILTER) {
+                        for (var key in filterKeys) {
+                            if (g[key] != filterKeys[key]) {
+                                return 0;
+                            }
+                        }
+                        return 1;
+                    } else { //OR_FILTER
+                        for (var key in filterKeys) {
+                            if (g[key] == filterKeys[key]) {
+                                return 1;
+                            }
+                        }
+                        return 0;
+                    }
+                    
                 });
             }).entries(data);
 
@@ -196,20 +314,24 @@
                     var chartDiv = document.getElementById(chartId);
                     var top = chartDiv.offsetTop;
                     var left = chartDiv.offsetLeft - width/2;
-                    chartDiv.setAttribute("style", "position:absolute; TOP:"+ (top + y)+"px; LEFT:"+(left + x)+"px");
+                    chartDiv.setAttribute("style", "position:absolute; TOP:"+ (top + y)+"px; LEFT:"+(left + x)+"px;"+setChartDivStyle);
+                    chartMoved(chartId);
                 }
 
                 var drag = d3.behavior.drag()
                 .on("drag", titleDrag);
 
-                d3.select(chartNum)
-                .append("text")
-                .attr("x", width/2)
-                .attr("y", 11)
-                .attr("text-anchor", "middle")
-                .attr("class", "chart-title")
-                .text(chartId + " ("+key+")")
-                .call(drag);
+                if (d3.select(chartNum).selectAll(".chart-title").size() == 0) {
+                    d3.select(chartNum)
+                    .append("text")
+                    .attr("x", width/2)
+                    .attr("y", 11)
+                    .attr("text-anchor", "middle")
+                    .attr("class", "chart-title")
+                    .text(chartId + " ("+key+")")
+                    .call(drag);
+                }
+                
 
                 if (chartId in selected) {
                     d3.select(selected[chartId].bar).style("fill", "red");
@@ -224,6 +346,27 @@
                 });
             });
 });
+}
+
+function deleteFilters(chartId) {
+    var connectionArrow;
+    /*for (var i = 0;i<chartConnections[chartId].length ; i++) {
+            connectionArrow = getConnectionArrow(chartId, chartConnections[chartId][i]);
+            connectionArrow.parentNode.removeChild(connectionArrow);
+        }*/
+    for (var i = 0;i<chartsConnected[chartId].length ; i++) {
+        connectionArrow = getConnectionArrow(chartsConnected[chartId][i], chartId);
+        connectionArrow.parentNode.removeChild(connectionArrow);
+        var connected = chartConnections[chartsConnected[chartId][i]];
+        var index = connected.indexOf(chartId);
+        connected.splice(index, 1);
+        if (connected.length == 0) {
+            chartConnections[chartsConnected[chartId][i]] = [];
+        }
+    }
+    chartsConnected[chartId] = {};
+    filters[chartId] = {};
+    refreshGraph(chartId);
 }
 
 function onBarSelection(chartId, bar, key, val) {
@@ -248,10 +391,10 @@ function onBarSelection(chartId, bar, key, val) {
                     for (charti in chartConnections[chartId]) {
                         var chartId2 = chartConnections[chartId][charti];
                         filterDownstreamChart(chartId, chartId2, key, val, isSelected);
-                   }
-               }
+                    }
+                }
 
-            function filterDownstreamChart(chartId, chartId2, key, val, isSelected) {
+                function filterDownstreamChart(chartId, chartId2, key, val, isSelected) {
                 //var chart2Key = charts[chartId2];
 
                 //Add currently selected item to filter of downstream chart
@@ -260,12 +403,6 @@ function onBarSelection(chartId, bar, key, val) {
                     filters[chartId2] = {};
                 }
                 filter = filters[chartId2];
-
-                //console.log(chartId + chartId2 + key + val + filter);
-
-                /*if (chartId == chartId2 || filter[key] == val) {
-                    return;
-                }*/
 
                 //prevent infinite loops if charts are parents and children of each other
                 if (isSelected && filter[key] == val) {
@@ -278,40 +415,35 @@ function onBarSelection(chartId, bar, key, val) {
                 }
 
                 propogateGraphCreationDownwards(chartId2);
-                
-                /*filter = filters[chartId2];
-                if (chart2Key != "") {
-                   createGraphFromKey(chart2Key, chartId2, filter);
-               }*/
+           }
+
+           function propogateGraphCreationDownwards(chartId) {
+            for (var i=0;i<chartConnections[chartId].length;i++) {
+                var chartId2 = chartConnections[chartId][i];
+                propogateGraphCreationDownwards(chartId2);
             }
 
-            function propogateGraphCreationDownwards(chartId) {
-                for (var i=0;i<chartConnections[chartId].length;i++) {
-                    var chartId2 = chartConnections[chartId][i];
-                    propogateGraphCreationDownwards(chartId2);
-                }
+            var filter = filters[chartId];
+            var key = charts[chartId];
+            if (key != "") {
+                createGraphFromKey(key, chartId, filter);
+            }
+        }
 
-                var filter = filters[chartId];
-                var key = charts[chartId];
-                if (key != "") {
-                    createGraphFromKey(key, chartId, filter);
-                }
+        function propogateFiltersDownward(chartId, chartId2, key, val) {
+            if (!(chartId2 in filters)) {
+                filters[chartId2] = {};
+            }
+            filter = filters[chartId2];
+
+            if (chartId == chartId2 || filter[key] == val) {
+                return;
             }
 
-            function propogateFiltersDownward(chartId, chartId2, key, val) {
-                if (!(chartId2 in filters)) {
-                    filters[chartId2] = {};
-                }
-                filter = filters[chartId2];
-
-                if (chartId == chartId2 || filter[key] == val) {
-                    return;
-                }
-
-                for (var i=0;i<chartConnections[chartId2].length;i++) {
-                    var chartId3 = chartConnections[chartId2][i];
-                    propogateFiltersDownward(chartId2, chartId3, key, val);
-                }
+            for (var i=0;i<chartConnections[chartId2].length;i++) {
+                var chartId3 = chartConnections[chartId2][i];
+                propogateFiltersDownward(chartId2, chartId3, key, val);
+            }
 
                 //make sure all filters that are applied to upstream chart get applied to downstream chart as well
                 for (var filterKey in filters[chartId]) {
