@@ -36,16 +36,6 @@
         return size;
     };
 
-    jsPlumb.ready(function() {
-        var arrow = {
-            //connector: ["Stright"],
-            //anchor: ["Left", "Right"],
-            //endpoint: "Dot"
-            //sendpoint:[ "Dot", { radius:2}],
-            //connector:[ "Bezier", { curviness:100 }]
-        };
-    });
-
     addHeaderSelector();
     var charts  = {};
     var chartConnections = {}; // source -> dest map
@@ -53,7 +43,6 @@
     var filters = {};
     var selected = {};
     var csv = "data/fakedata.csv";
-    //var setChartDivStyle = "padding-top:10px;border:1px solid black";
     var setChartDivStyle = "border:1px solid black";
 
     function addHeaderSelector() {
@@ -183,13 +172,7 @@
 
     function chartMoved(chartId) {
         //jsPlumb.repaint(chartId);
-        jsPlumb.repaintEverything();
-        /*for (var i = 0;i<chartConnections[chartId].length ; i++) {
-            makeArrowBetweenSourceAndDest(chartId, chartConnections[chartId][i]);
-        }
-        for (var i = 0;i<chartsConnected[chartId].length ; i++) {
-            makeArrowBetweenSourceAndDest(chartsConnected[chartId][i], chartId);
-        }*/
+        jsPlumb.repaintEverything(); //less efficient, see if jsPlumb.repaint has a bug
     }
 
     function connectGraph(source, dest) {
@@ -202,14 +185,12 @@
             filterDownstreamChart(source, dest, selected[source].key, selected[source].val, true);
         }
 
-        //jsPlumb.draggable($("#"+source));
-        //jsPlumb.draggable($("#"+dest));
         jsPlumb.connect({
             source:source,
             target:dest,
             endpoint:[ "Dot", { radius:5, hoverClass:"myEndpointHover" } ],
             connector:[ "Bezier", { curviness:100 }],
-            //connector:["Flowchart", {cornerRadius:10}],
+            //connector:["Flowchart", {cornerRadius:10}], //just a style change, see which is nicer
             anchors:["Continuous", "Continuous"],
              paintStyle:{ strokeStyle:"darkgray", lineWidth:3 },
                 endpointStyle:{ fillStyle:"darkgray", outlineColor:"gray" },
@@ -278,7 +259,6 @@
     }
 
     function refreshGraph(chartId) {
-        //IMPLEMENT
         var filterKeys = filters[chartId];
         if (filterKeys == undefined) {
             filterKeys = {};
