@@ -4,6 +4,9 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.6/d3.min.js" charset="utf-8"></script>
     <link href="nv.d3.css" rel="stylesheet">
     <script src="nv.d3.js"></script>
+    <script src="jsPlumb-2.0.4.js"></script>
+    <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.8.1/jquery.min.js"></script>
+    <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.23/jquery-ui.min.js"></script>
 </head>
 <body id="body">
 
@@ -32,6 +35,16 @@
         }
         return size;
     };
+
+    jsPlumb.ready(function() {
+        var arrow = {
+            //connector: ["Stright"],
+            //anchor: ["Left", "Right"],
+            //endpoint: "Dot"
+            //sendpoint:[ "Dot", { radius:2}],
+            //connector:[ "Bezier", { curviness:100 }]
+        };
+    });
 
     addHeaderSelector();
     var charts  = {};
@@ -169,12 +182,14 @@
     }
 
     function chartMoved(chartId) {
-        for (var i = 0;i<chartConnections[chartId].length ; i++) {
+        //jsPlumb.repaint(chartId);
+        jsPlumb.repaintEverything();
+        /*for (var i = 0;i<chartConnections[chartId].length ; i++) {
             makeArrowBetweenSourceAndDest(chartId, chartConnections[chartId][i]);
         }
         for (var i = 0;i<chartsConnected[chartId].length ; i++) {
             makeArrowBetweenSourceAndDest(chartsConnected[chartId][i], chartId);
-        }
+        }*/
     }
 
     function connectGraph(source, dest) {
@@ -187,7 +202,28 @@
             filterDownstreamChart(source, dest, selected[source].key, selected[source].val, true);
         }
 
-        makeArrowBetweenSourceAndDest(source, dest);
+        //jsPlumb.draggable($("#"+source));
+        //jsPlumb.draggable($("#"+dest));
+        jsPlumb.connect({
+            source:source,
+            target:dest,
+            endpoint:[ "Dot", { radius:5, hoverClass:"myEndpointHover" } ],
+            connector:[ "Bezier", { curviness:100 }],
+            //connector:["Flowchart", {cornerRadius:10}],
+            anchors:["Continuous", "Continuous"],
+             paintStyle:{ strokeStyle:"darkgray", lineWidth:3 },
+                endpointStyle:{ fillStyle:"darkgray", outlineColor:"gray" },
+                overlays:[ 
+                    ["Arrow" , { width:12, length:12, location:0.63 }]
+                ]
+            }, arrow);
+        jsPlumb.bind("connectionDetached", function(info, originalEvent) {
+            removeConnection(info.source.id, info.target.id);
+        });
+    }
+
+    function removeConnection(source, dest) {
+        console.log("remove connection " + source + " " + dest + " not yet implemented");
     }
 
     function makeArrowBetweenSourceAndDest(source, dest) {
@@ -388,7 +424,7 @@ function onBarSelection(chartId, bar, key, val) {
                     }
 
                     //Find all those charts downstream to current chart
-                    for (charti in chartConnections[chartId]) {
+                    for (var charti=0;charti< chartConnections[chartId].length;charti++) {
                         var chartId2 = chartConnections[chartId][charti];
                         filterDownstreamChart(chartId, chartId2, key, val, isSelected);
                     }
