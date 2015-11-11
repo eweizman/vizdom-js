@@ -88,120 +88,120 @@
             var svg = document.createElementNS('http://www.w3.org/2000/svg','svg');
             svg.setAttribute('xmlns:xlink','http://www.w3.org/1999/xlink');
             newGraphDiv.appendChild(filter);
-        newGraphDiv.appendChild(svg);
+            newGraphDiv.appendChild(svg);
 
-        newGraphDiv.setAttribute("draggable", "true");
-        newGraphDiv.setAttribute("ondragstart", "dragChart(event)");
-        newGraphDiv.addEventListener("drop", dropChartFromChartId(chartId), false);
+            newGraphDiv.setAttribute("draggable", "true");
+            newGraphDiv.setAttribute("ondragstart", "dragChart(event)");
+            newGraphDiv.addEventListener("drop", dropChartFromChartId(chartId), false);
 
-        var body = document.getElementById("body");
-        var newGraphButton = document.getElementById("newGraphButton");
+            var body = document.getElementById("body");
+            var newGraphButton = document.getElementById("newGraphButton");
 
-        body.insertBefore(newGraphDiv, newGraphButton);
+            body.insertBefore(newGraphDiv, newGraphButton);
 
-        createGraph(chartId, key);
-    }
-
-    function filterButtonPressed(chartId) {
-        return function (e) {
-            getFilterTypeButton(chartId).firstChild.nodeValue = getFilterType(chartId) == AND_FILTER ? OR_FILTER : AND_FILTER;
-            refreshGraph(chartId);
+            createGraph(chartId, key);
         }
-    }
 
-    function getFilterTypeButtonId(chartId) {
-        return "filterTypeButton" + chartId;
-    }
-
-    function getFilterTypeButton(chartId) {
-        return document.getElementById(getFilterTypeButtonId(chartId));
-    }
-
-    function getFilterType(chartId) {
-        return getFilterTypeButton(chartId).firstChild.nodeValue;
-    }
-
-    function allowDrop(ev) {
-        ev.preventDefault();
-    }
-
-    function dragOver(ev) {
-        ev.preventDefault();
-    }
-
-    function drag(ev) {
-        ev.dataTransfer.setData("type", "newGraph");
-        ev.dataTransfer.setData("text", ev.target.firstChild.nodeValue);
-    }
-
-    function dragChart(ev) {
-        ev.dataTransfer.setData("type", "dragChart");
-        ev.dataTransfer.setData("chartId", ev.target.id);
-    }
-
-    function drop(ev) {
-        ev.preventDefault();
-        var x = ev.pageX, y = ev.pageY;
-
-        switch(ev.dataTransfer.getData("type")) {
-            case "newGraph" :
-            var data = ev.dataTransfer.getData("text");
-            newGraph(x, y, data);
-            break;
-            default :
-            break;
-        }
-    }
-
-    function dragTrash(ev) {
-        ev.preventDefault();
-    }
-
-    function dropTrash(ev) {
-        ev.preventDefault();
-        switch(ev.dataTransfer.getData("type")) {
-                case "dragChart" :
-                    var chartId = ev.dataTransfer.getData("chartId");
-                    deleteChart(chartId);
-                    break;
-                default :
-                    break;
+        function filterButtonPressed(chartId) {
+            return function (e) {
+                getFilterTypeButton(chartId).firstChild.nodeValue = getFilterType(chartId) == AND_FILTER ? OR_FILTER : AND_FILTER;
+                refreshGraph(chartId);
             }
-    }
-
-    function deleteChart(chartId) {
-
-        for(var i=0;i<chartsConnected[chartId].length;i++) {
-            removeConnection(chartsConnected[chartId][i], chartId);
         }
 
-        for(var i=0;i<chartConnections[chartId].length;i++) {
-            removeConnection(chartId, chartConnections[chartId][i]);
+        function getFilterTypeButtonId(chartId) {
+            return "filterTypeButton" + chartId;
         }
 
-        jsPlumb.remove(chartId);
+        function getFilterTypeButton(chartId) {
+            return document.getElementById(getFilterTypeButtonId(chartId));
+        }
 
-        delete chartConnections[chartId];
-        delete chartsConnected[chartId];
-        delete filters[chartId];
-        delete selected[chartId];
-    }
+        function getFilterType(chartId) {
+            return getFilterTypeButton(chartId).firstChild.nodeValue;
+        }
 
-    function dropChartFromChartId(chartId2) {
-        return function(ev) {
+        function allowDrop(ev) {
+            ev.preventDefault();
+        }
+
+        function dragOver(ev) {
+            ev.preventDefault();
+        }
+
+        function drag(ev) {
+            ev.dataTransfer.setData("type", "newGraph");
+            ev.dataTransfer.setData("text", ev.target.firstChild.nodeValue);
+        }
+
+        function dragChart(ev) {
+            ev.dataTransfer.setData("type", "dragChart");
+            ev.dataTransfer.setData("chartId", ev.target.id);
+        }
+
+        function drop(ev) {
+            ev.preventDefault();
+            var x = ev.pageX, y = ev.pageY;
+
+            switch(ev.dataTransfer.getData("type")) {
+                case "newGraph" :
+                var data = ev.dataTransfer.getData("text");
+                newGraph(x, y, data);
+                break;
+                default :
+                break;
+            }
+        }
+
+        function dragTrash(ev) {
+            ev.preventDefault();
+        }
+
+        function dropTrash(ev) {
             ev.preventDefault();
             switch(ev.dataTransfer.getData("type")) {
                 case "dragChart" :
-                var chartId1 = ev.dataTransfer.getData("chartId");
-                connectGraph(chartId1, chartId2);
+                var chartId = ev.dataTransfer.getData("chartId");
+                deleteChart(chartId);
                 break;
                 default :
                 break;
             }
         }
-    }
 
-    function chartMoved(chartId) {
+        function deleteChart(chartId) {
+
+            for(var i=0;i<chartsConnected[chartId].length;i++) {
+                removeConnection(chartsConnected[chartId][i], chartId);
+            }
+
+            for(var i=0;i<chartConnections[chartId].length;i++) {
+                removeConnection(chartId, chartConnections[chartId][i]);
+            }
+
+            jsPlumb.remove(chartId);
+
+            delete chartConnections[chartId];
+            delete chartsConnected[chartId];
+            delete filters[chartId];
+            delete selected[chartId];
+        }
+
+        function dropChartFromChartId(chartId2) {
+            return function(ev) {
+                ev.preventDefault();
+                switch(ev.dataTransfer.getData("type")) {
+                    case "dragChart" :
+                    var chartId1 = ev.dataTransfer.getData("chartId");
+                    connectGraph(chartId1, chartId2);
+                    break;
+                    default :
+                    break;
+                }
+            }
+        }
+
+        function chartMoved(chartId) {
         //jsPlumb.repaint(chartId);
         jsPlumb.repaintEverything(); //less efficient, see if jsPlumb.repaint has a bug
     }
@@ -326,18 +326,26 @@
                     }
                     if (filterType == AND_FILTER) {
                         for (var key in filterKeys) {
-                            if (g[key] != filterKeys[key]) {
-                                return 0;
+                            for(var i=0;i<filterKeys[key].length;i++) {
+                                if(g[key] != filterKeys[key][i]) {
+                                    return 0;
+                                }
                             }
                         }
                         return 1;
                     } else { //OR_FILTER
+                        var allKeysEmpty = true;
                         for (var key in filterKeys) {
-                            if (g[key] == filterKeys[key]) {
-                                return 1;
+                            if (filterKeys[key].length != 0) {
+                                allKeysEmpty = false;
+                            }
+                            for(var i=0;i<filterKeys[key].length;i++) {
+                                if(g[key] == filterKeys[key][i]) {
+                                    return 1;
+                                }
                             }
                         }
-                        return 0;
+                        return allKeysEmpty;
                     }
                     
                 });
@@ -411,28 +419,6 @@
 });
 }
 
-function deleteFilters(chartId) {
-    console.log("delete filters implementation not complete.");
-    var connectionArrow;
-    /*for (var i = 0;i<chartConnections[chartId].length ; i++) {
-            connectionArrow = getConnectionArrow(chartId, chartConnections[chartId][i]);
-            connectionArrow.parentNode.removeChild(connectionArrow);
-        }*/
-    for (var i = 0;i<chartsConnected[chartId].length ; i++) {
-        connectionArrow = getConnectionArrow(chartsConnected[chartId][i], chartId);
-        connectionArrow.parentNode.removeChild(connectionArrow);
-        var connected = chartConnections[chartsConnected[chartId][i]];
-        var index = connected.indexOf(chartId);
-        connected.splice(index, 1);
-        if (connected.length == 0) {
-            chartConnections[chartsConnected[chartId][i]] = [];
-        }
-    }
-    chartsConnected[chartId] = {};
-    filters[chartId] = {};
-    refreshGraph(chartId);
-    }
-
     function onBarSelection(chartId, bar, key, val) {
         //Determine whether the bar is being selected or deselected
         var isSelected;
@@ -445,11 +431,18 @@ function deleteFilters(chartId) {
         deselectSelected(chartId);
 
         if (isSelected) {
-                        //Return previously selected bar to red color
-                        emphasizeSelectedBar(chartId, bar, key, val);
-                    } else {
-                        delete selected[chartId];
-                    }
+
+            if (chartId in selected) {
+                for(var i=0;i<chartConnections[chartId].length;i++) {
+                propogateDeselectionDownwards(chartConnections[chartId][i], selected[chartId].key, selected[chartId].val);
+                }
+            }
+            
+            //Return previously selected bar to red color
+            emphasizeSelectedBar(chartId, bar, key, val);
+        } else {
+            delete selected[chartId];
+        }
 
                     //Find all those charts downstream to current chart
                     for (var charti=0;charti< chartConnections[chartId].length;charti++) {
@@ -475,7 +468,7 @@ function deleteFilters(chartId) {
                 if (isSelected) {
                     propogateFiltersDownward(chartId, chartId2, key, val);
                 } else {
-                    propogateDeselectionDownwards(chartId2, key);
+                    propogateDeselectionDownwards(chartId2, key, val);
                 }
 
                 propogateGraphCreationDownwards(chartId2);
@@ -500,7 +493,11 @@ function deleteFilters(chartId) {
                 }
                 filter = filters[chartId2];
 
-                if (chartId == chartId2 || filter[key] == val) {
+               /* if (chartId == chartId2 || filter[key] == val) {
+                    return;
+                }*/
+
+                if (chartId == chartId2) {
                     return;
                 }
 
@@ -511,20 +508,32 @@ function deleteFilters(chartId) {
 
                 //make sure all filters that are applied to upstream chart get applied to downstream chart as well
                 for (var filterKey in filters[chartId]) {
-                    filter[filterKey] = filters[chartId][filterKey];
+                    //filter[filterKey] = filters[chartId][filterKey];
+                    if (filterKey in filter) {
+                        filter[filterKey].push(filters[chartId][filterKey]);
+                    } else {
+                        filter[filterKey] = [filters[chartId][filterKey]];
+                    }
                 }
-                filters[chartId2][key] = val;
+
+                if (key in filters[chartId2]) {
+                    filters[chartId2][key].push(val);
+                } else {
+                    filters[chartId2][key] = [val];
+                }
             }
 
-            function propogateDeselectionDownwards(chartId, key) {
+            function propogateDeselectionDownwards(chartId, key, val) {
                 if (! chartId in filters || ! chartId in chartConnections) {
                     return;
                 }
                 for (var i=0;i<chartConnections[chartId].length;i++) {
                     var chartId2 = chartConnections[chartId][i];
-                    propogateDeselectionDownwards(chartId2, key);
+                    propogateDeselectionDownwards(chartId2, key, val);
                 }
-                delete filters[chartId][key];
+                //delete filters[chartId][key];
+
+                filters[chartId][key].splice(filters[chartId][key].indexOf(val), 1);
             }
 
             function emphasizeSelectedBar(chartId, bar, key, val) {
