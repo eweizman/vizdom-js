@@ -155,6 +155,13 @@
 
         function dragTrash(ev) {
             ev.preventDefault();
+            switch(ev.dataTransfer.getData("type")) {
+                case "dragChart" :
+                //set icon image to open trash
+                break;
+                default :
+                break;
+            }
         }
 
         function dropTrash(ev) {
@@ -170,7 +177,6 @@
         }
 
         function deleteChart(chartId) {
-
             for(var i=0;i<chartsConnected[chartId].length;i++) {
                 removeConnection(chartsConnected[chartId][i], chartId);
             }
@@ -235,6 +241,10 @@
     }
 
     function removeConnection(source, dest) {
+        console.log("removeConnection");
+        if (chartConnections[source].indexOf(dest) == -1) {
+            return;
+        }
         chartConnections[source].splice(chartConnections[source].indexOf(dest), 1);
         chartsConnected[dest].splice(chartsConnected[dest].indexOf(source), 1);
 
@@ -246,7 +256,12 @@
     }
 
     function removeFilter(chartId, key, val) {
-        delete filters[chartId][key];
+        //delete filters[chartId][key];
+
+        filters[chartId][key].splice(filters[chartId][key].indexOf(val), 1);
+
+        console.log(filters[chartId][key]);
+
         refreshGraph(chartId);
 
         for(var i=0;i<chartConnections[chartId].length;i++) {
@@ -531,7 +546,6 @@
                     var chartId2 = chartConnections[chartId][i];
                     propogateDeselectionDownwards(chartId2, key, val);
                 }
-                //delete filters[chartId][key];
 
                 filters[chartId][key].splice(filters[chartId][key].indexOf(val), 1);
             }
