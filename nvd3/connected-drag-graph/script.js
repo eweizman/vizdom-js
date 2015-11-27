@@ -24,7 +24,7 @@ chartTrash.addEventListener('drop', dropTrash, false);
 chartTrash.addEventListener('dragover', dragTrash, false);
 
 //createHeatmap();
-newHeatmap(100, 100, null, null);
+newHeatmap(100, 100, "age", "salary");
 
 function addHeaderSelector() {
 	var csv = "data/fakedata.csv";
@@ -502,22 +502,49 @@ function createHeatmap(chartId,key1, key2) {
 		.append("g")
 		.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
-	d3.csv("data/data.csv", function(error, buckets) {
+	d3.csv("data/fakedata.csv", function(error, data) {
 		if (error) throw error;
 
+		//console.log(buckets);
+
 		// Coerce the CSV data to the appropriate types.
-		buckets.forEach(function(d) {
+		/*buckets.forEach(function(d) {
 			d.date = parseDate(d.date);
 			d.bucket = +d.bucket;
 			d.count = +d.count;
+		});*/
+
+		var buckets = [];
+
+		var rolledUp = d3.nest()
+			.key(function(d) { return d[key1]; })
+			.key(function(d) { return d[key2]; })
+			.rollup(
+				function(d){
+					return d3.sum(d, function(g) {
+						return 1;
+					});
+				})
+			.entries(data);
+
+		rolledUp.forEach(function(d) {
+			d.values.forEach(function(d2) {
+				var newObj = {};
+				newObj[key1] = d.key;
+				newObj[key2] = d2.key;
+				newObj.count = +d2.values;
+				buckets.push(newObj);
+			});
 		});
+
+		console.log(buckets);
 
 		// Compute the scale domains.
 		x.domain(d3.extent(buckets, function(d) {
-			return d.date;
+			return d[key2];//d.date;
 		}));
 		y.domain(d3.extent(buckets, function(d) {
-			return d.bucket;
+			return d[key1];//.bucket;
 		}));
 		z.domain([0, d3.max(buckets, function(d) {
 			return d.count;
@@ -535,10 +562,13 @@ function createHeatmap(chartId,key1, key2) {
 			.enter().append("rect")
 			.attr("class", "tile")
 			.attr("x", function(d) {
-				return x(d.date);
+				console.log(x);
+				console.log(d[key2]);
+				console.log(x(d[key2]));
+				return x(d[key2]);//x(d.date);
 			})
 			.attr("y", function(d) {
-				return y(d.bucket + yStep);
+				return y(d[key1]);//y(d.bucket + yStep);
 			})
 			.attr("width", x(xStep) - x(0))
 			.attr("height", y(0) - y(yStep))
@@ -583,13 +613,14 @@ function createHeatmap(chartId,key1, key2) {
 		svg.append("g")
 			.attr("class", "x axis")
 			.attr("transform", "translate(0," + height + ")")
-			.call(d3.svg.axis().scale(x).ticks(d3.time.days).tickFormat(formatDate).orient("bottom"))
+			.call(d3.svg.axis().scale(x).orient("bottom"))
+			//.call(d3.svg.axis().scale(x).ticks(d3.time.days).tickFormat(formatDate).orient("bottom"))
 			.append("text")
 			.attr("class", "label")
 			.attr("x", width)
 			.attr("y", -6)
 			.attr("text-anchor", "end")
-			.text("Date");
+			.text(key2);
 
 		// Add a y-axis with label.
 		svg.append("g")
@@ -601,7 +632,7 @@ function createHeatmap(chartId,key1, key2) {
 			.attr("dy", ".71em")
 			.attr("text-anchor", "end")
 			.attr("transform", "rotate(-90)")
-			.text("Value");
+			.text(key1);
 	});
 
 	function titleDrag(d) {
