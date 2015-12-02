@@ -1,5 +1,6 @@
 var AND_FILTER = "and";
 var OR_FILTER = "or";
+var HEATMAP_PREFIX = "heatmap";
 
 Object.size = function(obj) {
 	var size = 0,
@@ -232,7 +233,19 @@ function connectGraph(source, dest) {
 	chartConnections[source].push(dest);
 	chartsConnected[dest].push(source);
 	if (source in selected) {
-		filterDownstreamChart(source, dest, selected[source].key, selected[source].val, true);
+		if (Array.isArray(selected[source].key)) {
+			filterDownstreamChart(source, dest, selected[source].key[0], selected[source].val[0], true);
+			filterDownstreamChart(source, dest, selected[source].key[1], selected[source].val[1], true);
+		} else {
+			filterDownstreamChart(source, dest, selected[source].key, selected[source].val, true);
+		}
+	} else if (source in filters) {
+		for (var key in filters[source]) {
+			for(var i=0;i<filters[source][key].length;i++) {
+				propogateFiltersDownward(source, dest, key, filters[source][key][i]);
+				refreshAllChildGraphs(dest);
+			}
+		}
 	}
 
 	jsPlumb.connect({
@@ -352,16 +365,34 @@ function refreshGraph(chartId) {
 	if (filterKeys == undefined) {
 		filterKeys = {};
 	}
-	createGraphFromKey(charts[chartId], chartId, filterKeys);
+	if (Array.isArray(charts[chartId])) {
+		createHeatmapFromKey(chartId, charts[chartId][0], charts[chartId][1], filterKeys);
+	} else {
+		createGraphFromKey(charts[chartId], chartId, filterKeys);
+	}
+	
 }
 
-function createGraphFromKey(key, chartId, filterKeys) {
-	var chartNum = '#' + chartId + " svg";
-	d3.csv(csv, function(error, data) {
-		var group = d3.nest()
-			.key(function(d) {
+function refreshAllChildGraphs(chartId) {
+	refreshGraph(chartId);
+	for (var i = 0; i < chartConnections[chartId].length; i++) {
+		refreshAllChildGraphs(chartConnections[chartId][i]);
+	}
+}
+
+function keyNest(key) {
+	if (Array.isArray(key)) {
+		return d3.nest().key(function(d) { return d[key[0]]; })
+			.key(function(d) { return d[key[1]]; });
+	} else {
+		return d3.nest().key(function(d) {
 				return d[key]
-			})
+			});
+	}
+}
+
+function applyFilters(key, chartId, data, filterKeys) {
+	return keyNest(key)
 			.rollup(function(d) {
 				return d3.sum(d, function(g) {
 					var filterType = getFilterType(chartId);
@@ -394,6 +425,12 @@ function createGraphFromKey(key, chartId, filterKeys) {
 
 				});
 			}).entries(data);
+}
+
+function createGraphFromKey(key, chartId, filterKeys) {
+	var chartNum = '#' + chartId + " svg";
+	d3.csv(csv, function(error, data) {
+		var group = applyFilters(key, chartId, data, filterKeys);
 
 		group.forEach(function(d) {
 			d.label = d.key;
@@ -468,7 +505,7 @@ function createGraphFromKey(key, chartId, filterKeys) {
 	});
 }
 
-function createHeatmap(chartId,key1, key2) {
+function createHeatmapFromKey(chartId, key1, key2, filterKeys) {
 	//var width = 400, height = 300;
 	var margin = {
 			top: 20,
@@ -482,17 +519,9 @@ function createHeatmap(chartId,key1, key2) {
 	var parseDate = d3.time.format("%Y-%m-%d").parse,
 		formatDate = d3.time.format("%b %d");
 
-	var x = d3.time.scale().range([0, width]),
-		y = d3.scale.linear().range([height, 0]),
+	var x = d3.scale.ordinal().rangeBands([0, width]),
+		y = d3.scale.ordinal().rangeBands([height, 0]),
 		z = d3.scale.linear().range(["white", "steelblue"]);
-
-	// The size of the buckets in the CSV data file.
-	// This could be inferred from the data if it weren't sparse.
-	var xStep = 864e5,
-		yStep = 100;
-
-		console.log(d3.select(chartId));
-
 
    var chartNum = '#' + chartId + " svg";
 
@@ -505,27 +534,9 @@ function createHeatmap(chartId,key1, key2) {
 	d3.csv("data/fakedata.csv", function(error, data) {
 		if (error) throw error;
 
-		//console.log(buckets);
-
-		// Coerce the CSV data to the appropriate types.
-		/*buckets.forEach(function(d) {
-			d.date = parseDate(d.date);
-			d.bucket = +d.bucket;
-			d.count = +d.count;
-		});*/
-
 		var buckets = [];
 
-		var rolledUp = d3.nest()
-			.key(function(d) { return d[key1]; })
-			.key(function(d) { return d[key2]; })
-			.rollup(
-				function(d){
-					return d3.sum(d, function(g) {
-						return 1;
-					});
-				})
-			.entries(data);
+		var rolledUp = applyFilters([key1,key2], chartId, data, filterKeys);
 
 		rolledUp.forEach(function(d) {
 			d.values.forEach(function(d2) {
@@ -537,23 +548,16 @@ function createHeatmap(chartId,key1, key2) {
 			});
 		});
 
-		console.log(buckets);
-
 		// Compute the scale domains.
-		x.domain(d3.extent(buckets, function(d) {
-			return d[key2];//d.date;
+		x.domain(buckets.map(function (d) {
+			return d[key2];
 		}));
-		y.domain(d3.extent(buckets, function(d) {
-			return d[key1];//.bucket;
+		y.domain(buckets.map(function (d) {
+			return d[key1];
 		}));
 		z.domain([0, d3.max(buckets, function(d) {
 			return d.count;
 		})]);
-
-		// Extend the x- and y-domain to fit the last bucket.
-		// For example, the y-bucket 3200 corresponds to values [3200, 3300].
-		x.domain([x.domain()[0], +x.domain()[1] + xStep]);
-		y.domain([y.domain()[0], y.domain()[1] + yStep]);
 
 		// Display the tiles for each non-zero bucket.
 		// See http://bl.ocks.org/3074470 for an alternative implementation.
@@ -561,26 +565,26 @@ function createHeatmap(chartId,key1, key2) {
 			.data(buckets)
 			.enter().append("rect")
 			.attr("class", "tile")
+			.on("click", function(e){
+				onTileSelection(chartId, this, key1, key2, e[key1], e[key2]);
+			})
 			.attr("x", function(d) {
-				console.log(x);
-				console.log(d[key2]);
-				console.log(x(d[key2]));
-				return x(d[key2]);//x(d.date);
+				return x(d[key2]);
 			})
 			.attr("y", function(d) {
-				return y(d[key1]);//y(d.bucket + yStep);
+				return y(d[key1]);
 			})
-			.attr("width", x(xStep) - x(0))
-			.attr("height", y(0) - y(yStep))
 			.attr("id", function(d) {
-				return heatmapId(d, key1, key2);
+				return heatmapId(d, chartId, key1, key2);
 			})
+			.attr("width", x.rangeBand())
+			.attr("height", y.rangeBand())
 			.style("fill", function(d) {
 				return z(d.count);
 			})
-			.on("click", function(e){
-				console.log(e);
-			});
+			;
+
+		$("#"+chartId+" .legend").empty();
 
 		// Add a legend for the color values.
 		var legend = svg.selectAll(".legend")
@@ -614,7 +618,6 @@ function createHeatmap(chartId,key1, key2) {
 			.attr("class", "x axis")
 			.attr("transform", "translate(0," + height + ")")
 			.call(d3.svg.axis().scale(x).orient("bottom"))
-			//.call(d3.svg.axis().scale(x).ticks(d3.time.days).tickFormat(formatDate).orient("bottom"))
 			.append("text")
 			.attr("class", "label")
 			.attr("x", width)
@@ -660,9 +663,45 @@ function createHeatmap(chartId,key1, key2) {
 			}
 }
 
-function heatmapId(d, key1, key2) {
-	//return "heatmap"+d.key1+","+d.key2;
-	return "test";
+function createHeatmap(chartId,key1, key2) {
+	createHeatmapFromKey(chartId, key1, key2, {});
+	charts[chartId] = [key1, key2];
+}
+
+function heatmapId(d, chartId, key1, key2) {
+	return HEATMAP_PREFIX+chartId+"-"+d[key1]+"-"+d[key2];
+}
+
+function onTileSelection(chartId, tile, key1, key2, val1, val2) {
+	var isSelected;
+	if (chartId in selected) {
+		isSelected = !(selected[chartId].val.indexOf(val1) != -1) || !(selected[chartId].val.indexOf(val2) != -1);
+	} else {
+		isSelected = true;
+	}
+
+	deselectSelected(chartId);
+
+	if (isSelected) {
+
+		if (chartId in selected) {
+			for (var i = 0; i < chartConnections[chartId].length; i++) {
+				propogateDeselectionDownwards(chartConnections[chartId][i], selected[chartId].key[0], selected[chartId].val[0]);
+				propogateDeselectionDownwards(chartConnections[chartId][i], selected[chartId].key[1], selected[chartId].val[1]);
+			}
+		}
+
+		emphasizeSelectedTile(chartId, tile, key1, key2, val1, val2);
+	} else {
+		delete selected[chartId];
+	}
+
+	//Find all those charts downstream to current chart
+	for (var charti = 0; charti < chartConnections[chartId].length; charti++) {
+		var chartId2 = chartConnections[chartId][charti];
+		filterDownstreamChart(chartId, chartId2, key1, val1, isSelected);
+		filterDownstreamChart(chartId, chartId2, key2, val2, isSelected);
+	}
 }
 
 function onBarSelection(chartId, bar, key, val) {
@@ -728,8 +767,13 @@ function propogateGraphCreationDownwards(chartId) {
 
 	var filter = filters[chartId];
 	var key = charts[chartId];
+
 	if (key != "") {
-		createGraphFromKey(key, chartId, filter);
+		if (Array.isArray(key)) {
+			createHeatmapFromKey(chartId, key[0], key[1], filter);
+		} else {
+			createGraphFromKey(key, chartId, filter);
+		}
 	}
 }
 
@@ -789,6 +833,22 @@ function emphasizeSelectedBar(chartId, bar, key, val) {
 		color: d3.select(bar).style("fill")
 	};
 	d3.select(bar).style("fill", "red");
+}
+
+function emphasizeSelectedTileIndependantly(chartId) {
+	if (chartId in selected) {
+		d3.select(selected[chartId].bar).style("fill", "red");
+	}
+}
+
+function emphasizeSelectedTile(chartId, tile, key1, key2, val1, val2) {
+	selected[chartId] = {
+		key: [key1, key2],
+		val: [val1, val2],
+		bar: tile,
+		color: d3.select(tile).style("fill")
+	};
+	d3.select(tile).style("fill", "red");
 }
 
 function deselectSelected(chartId) {
