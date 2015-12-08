@@ -115,6 +115,10 @@ function newHeatmap(x,y,key1,key2) {
 	createHeatmap(chartId, key1, key2);
 }
 
+function isHeatmap(chartId) {
+	return Array.isArray(charts[chartId]);
+}
+
 function filterButtonPressed(chartId) {
 	return function(e) {
 		getFilterTypeButton(chartId).firstChild.nodeValue = getFilterType(chartId) == AND_FILTER ? OR_FILTER : AND_FILTER;
@@ -145,6 +149,7 @@ function dragOver(ev) {
 function drag(ev) {
 	ev.dataTransfer.setData("type", "newGraph");
 	ev.dataTransfer.setData("text", ev.target.firstChild.nodeValue);
+	ev.dataTransfer.setData("currentGraphNum", Object.size(charts));
 }
 
 function dragChart(ev) {
@@ -153,12 +158,16 @@ function dragChart(ev) {
 }
 
 function drop(ev) {
+	console.log("CANVAS")
 	ev.preventDefault();
 	var x = ev.pageX,
 		y = ev.pageY;
 
 	switch (ev.dataTransfer.getData("type")) {
 		case "newGraph":
+			if (ev.dataTransfer.getData("currentGraphNum") != Object.size(charts)) {
+				return;
+			}
 			var data = ev.dataTransfer.getData("text");
 			newGraph(x, y, data);
 			break;
@@ -210,11 +219,22 @@ function deleteChart(chartId) {
 function dropChartFromChartId(chartId2) {
 	return function(ev) {
 		ev.preventDefault();
+		var x = ev.pageX,
+		y = ev.pageY;
 		switch (ev.dataTransfer.getData("type")) {
 			case "dragChart":
 				var chartId1 = ev.dataTransfer.getData("chartId");
 				connectGraph(chartId1, chartId2);
 				break;
+		 	case "newGraph":
+		 		if (isHeatmap(chartId2)) {
+		 			return;
+		 		}
+		 		var key1 = charts[chartId2];
+		 		var key2 = ev.dataTransfer.getData("text");
+		 		newHeatmap(x,y,key1,key2);
+		 		deleteChart(chartId2);
+		 		break;
 			default:
 				break;
 		}
