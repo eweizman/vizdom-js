@@ -661,6 +661,7 @@ function createHeatmapFromKey(chartId, key1, key2, filterKeys) {
 					.text(chartId + " (" + key1 + "/" + key2 + ")")
 					.call(drag);
 			}
+
 }
 
 function createHeatmap(chartId,key1, key2) {
