@@ -12,8 +12,6 @@ Object.size = function(obj) {
 	return size;
 };
 
-addHeaderSelector();
-
 /**
 * @key the id of the chart
 * @value the key/s of the chart
@@ -59,9 +57,10 @@ var chartTrash = document.getElementById("chart_trash");
 chartTrash.addEventListener('drop', dropTrash, false);
 chartTrash.addEventListener('dragover', dragTrash, false);
 
+addHeaderSelector();
+
 // Adds  the keys to the top of the page as draggable buttons
 function addHeaderSelector() {
-	var csv = "data/fakedata.csv";
 	d3.csv(csv, function(error, data) {
 		keys = d3.keys(data[0]);
 		for (i = 0; i < keys.length; i++) {
