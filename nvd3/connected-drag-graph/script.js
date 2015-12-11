@@ -2,6 +2,7 @@ var AND_FILTER = "and";
 var OR_FILTER = "or";
 var HEATMAP_PREFIX = "heatmap";
 
+// An easy to use size function for maps
 Object.size = function(obj) {
 	var size = 0,
 		key;
@@ -12,21 +13,53 @@ Object.size = function(obj) {
 };
 
 addHeaderSelector();
+
+/**
+* @key the id of the chart
+* @value the key/s of the chart
+* */
 var charts = {};
-var chartConnections = {}; // source -> dest map
-var chartsConnected = {}; // dest -> source map
+
+/**
+* source -> dest map
+* @key Upstream chart
+* @value Array of downstream charts
+* */
+var chartConnections = {};
+
+/**
+* dest -> source map
+* @key Downstream chart
+* @value Array of upstream charts
+* */
+var chartsConnected = {};
+
+/** 
+* @key the id of the chart
+* @value associative array connecting the name of the key to an array of filters on it.
+* */
 var filters = {};
+
+/**
+* Contains the data for charts with data selected.
+* @key the id of the chart
+* @value An associative array containing selected data:
+* 		bar: the selected element
+* 		color: the color of the selected element before it was selected
+* 		key: key/s of selected element
+*		val: val/s of selected element
+* */
 var selected = {};
+
 var csv = "data/fakedata.csv";
-var setChartDivStyle = "border:1px solid black;padding-top:10px";
+
+var setChartDivStyle = "border:1px solid black;padding-top:10px"; // Common style between all charts
 
 var chartTrash = document.getElementById("chart_trash");
 chartTrash.addEventListener('drop', dropTrash, false);
 chartTrash.addEventListener('dragover', dragTrash, false);
 
-//createHeatmap();
-newHeatmap(100, 100, "age", "salary");
-
+// Adds  the keys to the top of the page as draggable buttons
 function addHeaderSelector() {
 	var csv = "data/fakedata.csv";
 	d3.csv(csv, function(error, data) {
@@ -111,7 +144,6 @@ function newHeatmap(x,y,key1,key2) {
 
 	body.insertBefore(newGraphDiv, newGraphButton);
 
-	//createGraph(chartId, key);
 	createHeatmap(chartId, key1, key2);
 }
 
@@ -147,6 +179,9 @@ function dragOver(ev) {
 }
 
 function drag(ev) {
+	if (ev.target.firstChild == null) {
+		return;
+	}
 	ev.dataTransfer.setData("type", "newGraph");
 	ev.dataTransfer.setData("text", ev.target.firstChild.nodeValue);
 	ev.dataTransfer.setData("currentGraphNum", Object.size(charts));
@@ -157,8 +192,8 @@ function dragChart(ev) {
 	ev.dataTransfer.setData("chartId", ev.target.id);
 }
 
+// Handles drop events for the back canvas
 function drop(ev) {
-	console.log("CANVAS")
 	ev.preventDefault();
 	var x = ev.pageX,
 		y = ev.pageY;
@@ -198,6 +233,8 @@ function dropTrash(ev) {
 			break;
 	}
 }
+
+//--CHART MANAGEMENT--//
 
 function deleteChart(chartId) {
 	for (var i = 0; i < chartsConnected[chartId].length; i++) {
@@ -243,7 +280,7 @@ function dropChartFromChartId(chartId2) {
 
 function chartMoved(chartId) {
 	//jsPlumb.repaint(chartId);
-	jsPlumb.repaintEverything(); //less efficient, see if jsPlumb.repaint has a bug
+	jsPlumb.repaintEverything(); //less efficient, looks like jsPlumb.repaint has a bug
 }
 
 function connectGraph(source, dest) {
@@ -301,7 +338,6 @@ function connectGraph(source, dest) {
 }
 
 function removeConnection(source, dest) {
-	console.log("removeConnection");
 	if (chartConnections[source].indexOf(dest) == -1) {
 		return;
 	}
@@ -312,48 +348,23 @@ function removeConnection(source, dest) {
 		return;
 	}
 
-	removeFilter(dest, selected[source].key, selected[source].val);
+	if (isHeatmap(source)) {
+		removeFilter(dest, selected[source].key[0], selected[source].val[0]);
+		removeFilter(dest, selected[source].key[1], selected[source].val[1]);
+	} else {
+		removeFilter(dest, selected[source].key, selected[source].val);
+	}
+	
 }
 
 function removeFilter(chartId, key, val) {
-	//delete filters[chartId][key];
-
 	filters[chartId][key].splice(filters[chartId][key].indexOf(val), 1);
-
-	console.log(filters[chartId][key]);
 
 	refreshGraph(chartId);
 
 	for (var i = 0; i < chartConnections[chartId].length; i++) {
 		removeFilter(chartConnections[chartId][i], key, val);
 	}
-}
-
-function makeArrowBetweenSourceAndDest(source, dest) {
-	var x1 = document.getElementById(source).offsetLeft;
-	var y1 = document.getElementById(source).offsetTop;
-	var x2 = document.getElementById(dest).offsetLeft;
-	var y2 = document.getElementById(dest).offsetTop;
-	var connectionArrow = getConnectionArrow(source, dest);
-	connectionArrow.setAttribute("x1", x1); //Create a path in SVG's namespace
-	connectionArrow.setAttribute("y1", y1);
-	connectionArrow.setAttribute("x2", x2);
-	connectionArrow.setAttribute("y2", y2);
-}
-
-// JSPlumb will likely be a prettier and easier way to do lines https://github.com/sporritt/jsplumb/
-function getConnectionArrow(source, dest) {
-	var connectionArrow = document.getElementById(getArrowId(source, dest));
-	if (connectionArrow == null) {
-		var svg = document.getElementById("background_svg");
-		connectionArrow = document.createElementNS("http://www.w3.org/2000/svg", 'line');
-		connectionArrow.setAttribute("stroke", "#444");
-		connectionArrow.setAttribute("stroke-width", 1);
-		connectionArrow.setAttribute("marker-end", "url(#arrow)");
-		connectionArrow.setAttribute("id", getArrowId(source, dest));
-		svg.appendChild(connectionArrow);
-	}
-	return connectionArrow;
 }
 
 function getArrowId(source, dest) {
@@ -446,6 +457,8 @@ function applyFilters(key, chartId, data, filterKeys) {
 				});
 			}).entries(data);
 }
+
+//--CREATING GRAPHS SECTION--//
 
 function createGraphFromKey(key, chartId, filterKeys) {
 	var chartNum = '#' + chartId + " svg";
@@ -692,6 +705,8 @@ function createHeatmap(chartId,key1, key2) {
 function heatmapId(d, chartId, key1, key2) {
 	return HEATMAP_PREFIX+chartId+"-"+d[key1]+"-"+d[key2];
 }
+
+//--HANDLE SELECTION AND FILTERS SECTION--//
 
 function onTileSelection(chartId, tile, key1, key2, val1, val2) {
 	var isSelected;
