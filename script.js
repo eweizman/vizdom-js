@@ -13,40 +13,40 @@ Object.size = function(obj) {
 };
 
 /**
-* @key the id of the chart
-* @value the key/s of the chart
-* */
+ * @key the id of the chart
+ * @value the key/s of the chart
+ * */
 var charts = {};
 
 /**
-* source -> dest map
-* @key Upstream chart
-* @value Array of downstream charts
-* */
+ * source -> dest map
+ * @key Upstream chart
+ * @value Array of downstream charts
+ * */
 var chartConnections = {};
 
 /**
-* dest -> source map
-* @key Downstream chart
-* @value Array of upstream charts
-* */
+ * dest -> source map
+ * @key Downstream chart
+ * @value Array of upstream charts
+ * */
 var chartsConnected = {};
 
 /** 
-* @key the id of the chart
-* @value associative array connecting the name of the key to an array of filters on it.
-* */
+ * @key the id of the chart
+ * @value associative array connecting the name of the key to an array of filters on it.
+ * */
 var filters = {};
 
 /**
-* Contains the data for charts with data selected.
-* @key the id of the chart
-* @value An associative array containing selected data:
-* 		bar: the selected element
-* 		color: the color of the selected element before it was selected
-* 		key: key/s of selected element
-*		val: val/s of selected element
-* */
+ * Contains the data for charts with data selected.
+ * @key the id of the chart
+ * @value An associative array containing selected data:
+ * 		bar: the selected element
+ * 		color: the color of the selected element before it was selected
+ * 		key: key/s of selected element
+ *		val: val/s of selected element
+ * */
 var selected = {};
 
 var csv = "data/fakedata.csv";
@@ -69,50 +69,46 @@ function addHeaderSelector() {
 			button.appendChild(document.createTextNode(key));
 			button.setAttribute("type", "button");
 			button.setAttribute("draggable", "true");
-			button.setAttribute("ondragstart", "drag(event)");
+			button.setAttribute("ondragstart", "dragKeySelector(event)");
 			var div = document.getElementById("header_buttons");
 			div.appendChild(button);
 		}
+
+		// Allow body to handle drag/drop events.
 		document.body.addEventListener('drop', drop, false);
 		document.body.addEventListener('dragover', dragOver, false);
 	});
 }
 
+function dragKeySelector(ev) {
+	if (ev.target.firstChild == null) {
+		return;
+	}
+	ev.dataTransfer.setData("type", "newGraph"); // Tells the droplistener to expect data for a new graph
+	ev.dataTransfer.setData("text", ev.target.firstChild.nodeValue);
+	ev.dataTransfer.setData("currentGraphNum", Object.size(charts));
+}
+
+
+function allowDrop(ev) {
+	ev.preventDefault();
+}
+
+function dragOver(ev) {
+	ev.preventDefault();
+}
+
 function newGraph(x, y, key) {
-	var chartId = "chart" + (Object.size(charts) + 1);
-	charts[chartId] = "";
-	chartConnections[chartId] = [];
-	chartsConnected[chartId] = [];
-	var newGraphDiv = document.createElement("div");
-	newGraphDiv.setAttribute("id", chartId);
-
-	newGraphDiv.setAttribute("style", "position:absolute; TOP:" + y + "px; LEFT:" + x + "px;" + setChartDivStyle);
-
-	var filter = document.createElement("button");
-	filter.setAttribute("type", "button");
-	filter.appendChild(document.createTextNode(AND_FILTER));
-	filter.setAttribute("id", getFilterTypeButtonId(chartId));
-	filter.setAttribute("style", "position:absolute");
-	filter.onclick = filterButtonPressed(chartId);
-
-	var svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-	svg.setAttribute('xmlns:xlink', 'http://www.w3.org/1999/xlink');
-	newGraphDiv.appendChild(filter);
-	newGraphDiv.appendChild(svg);
-
-	newGraphDiv.setAttribute("draggable", "true");
-	newGraphDiv.setAttribute("ondragstart", "dragChart(event)");
-	newGraphDiv.addEventListener("drop", dropChartFromChartId(chartId), false);
-
-	var body = document.getElementById("body");
-	var newGraphButton = document.getElementById("newGraphButton");
-
-	body.insertBefore(newGraphDiv, newGraphButton);
-
+	var chartId = newGraphDiv(x, y);
 	createGraph(chartId, key);
 }
 
-function newHeatmap(x,y,key1,key2) {
+function newHeatmap(x, y, key1, key2) {
+	var chartId = newGraphDiv(x, y);
+	createHeatmap(chartId, key1, key2);
+}
+
+function newGraphDiv(x, y) {
 	var chartId = "chart" + (Object.size(charts) + 1);
 	charts[chartId] = "";
 	chartConnections[chartId] = [];
@@ -142,8 +138,7 @@ function newHeatmap(x,y,key1,key2) {
 	var newGraphButton = document.getElementById("newGraphButton");
 
 	body.insertBefore(newGraphDiv, newGraphButton);
-
-	createHeatmap(chartId, key1, key2);
+	return chartId;
 }
 
 function isHeatmap(chartId) {
@@ -167,23 +162,6 @@ function getFilterTypeButton(chartId) {
 
 function getFilterType(chartId) {
 	return getFilterTypeButton(chartId).firstChild.nodeValue;
-}
-
-function allowDrop(ev) {
-	ev.preventDefault();
-}
-
-function dragOver(ev) {
-	ev.preventDefault();
-}
-
-function drag(ev) {
-	if (ev.target.firstChild == null) {
-		return;
-	}
-	ev.dataTransfer.setData("type", "newGraph");
-	ev.dataTransfer.setData("text", ev.target.firstChild.nodeValue);
-	ev.dataTransfer.setData("currentGraphNum", Object.size(charts));
 }
 
 function dragChart(ev) {
@@ -256,21 +234,21 @@ function dropChartFromChartId(chartId2) {
 	return function(ev) {
 		ev.preventDefault();
 		var x = ev.pageX,
-		y = ev.pageY;
+			y = ev.pageY;
 		switch (ev.dataTransfer.getData("type")) {
 			case "dragChart":
 				var chartId1 = ev.dataTransfer.getData("chartId");
 				connectGraph(chartId1, chartId2);
 				break;
-		 	case "newGraph":
-		 		if (isHeatmap(chartId2)) {
-		 			return;
-		 		}
-		 		var key1 = charts[chartId2];
-		 		var key2 = ev.dataTransfer.getData("text");
-		 		newHeatmap(x,y,key1,key2);
-		 		deleteChart(chartId2);
-		 		break;
+			case "newGraph":
+				if (isHeatmap(chartId2)) {
+					return;
+				}
+				var key1 = charts[chartId2];
+				var key2 = ev.dataTransfer.getData("text");
+				newHeatmap(x, y, key1, key2);
+				deleteChart(chartId2);
+				break;
 			default:
 				break;
 		}
@@ -297,7 +275,7 @@ function connectGraph(source, dest) {
 		}
 	} else if (source in filters) {
 		for (var key in filters[source]) {
-			for(var i=0;i<filters[source][key].length;i++) {
+			for (var i = 0; i < filters[source][key].length; i++) {
 				propogateFiltersDownward(source, dest, key, filters[source][key][i]);
 				refreshAllChildGraphs(dest);
 			}
@@ -353,7 +331,7 @@ function removeConnection(source, dest) {
 	} else {
 		removeFilter(dest, selected[source].key, selected[source].val);
 	}
-	
+
 }
 
 function removeFilter(chartId, key, val) {
@@ -400,7 +378,7 @@ function refreshGraph(chartId) {
 	} else {
 		createGraphFromKey(charts[chartId], chartId, filterKeys);
 	}
-	
+
 }
 
 function refreshAllChildGraphs(chartId) {
@@ -412,49 +390,53 @@ function refreshAllChildGraphs(chartId) {
 
 function keyNest(key) {
 	if (Array.isArray(key)) {
-		return d3.nest().key(function(d) { return d[key[0]]; })
-			.key(function(d) { return d[key[1]]; });
+		return d3.nest().key(function(d) {
+				return d[key[0]];
+			})
+			.key(function(d) {
+				return d[key[1]];
+			});
 	} else {
 		return d3.nest().key(function(d) {
-				return d[key]
-			});
+			return d[key]
+		});
 	}
 }
 
 function applyFilters(key, chartId, data, filterKeys) {
 	return keyNest(key)
-			.rollup(function(d) {
-				return d3.sum(d, function(g) {
-					var filterType = getFilterType(chartId);
-					if (Object.size(filterKeys) == 0) {
-						return 1;
-					}
-					if (filterType == AND_FILTER) {
-						for (var key in filterKeys) {
-							for (var i = 0; i < filterKeys[key].length; i++) {
-								if (g[key] != filterKeys[key][i]) {
-									return 0;
-								}
+		.rollup(function(d) {
+			return d3.sum(d, function(g) {
+				var filterType = getFilterType(chartId);
+				if (Object.size(filterKeys) == 0) {
+					return 1;
+				}
+				if (filterType == AND_FILTER) {
+					for (var key in filterKeys) {
+						for (var i = 0; i < filterKeys[key].length; i++) {
+							if (g[key] != filterKeys[key][i]) {
+								return 0;
 							}
 						}
-						return 1;
-					} else { //OR_FILTER
-						var allKeysEmpty = true;
-						for (var key in filterKeys) {
-							if (filterKeys[key].length != 0) {
-								allKeysEmpty = false;
-							}
-							for (var i = 0; i < filterKeys[key].length; i++) {
-								if (g[key] == filterKeys[key][i]) {
-									return 1;
-								}
+					}
+					return 1;
+				} else { //OR_FILTER
+					var allKeysEmpty = true;
+					for (var key in filterKeys) {
+						if (filterKeys[key].length != 0) {
+							allKeysEmpty = false;
+						}
+						for (var i = 0; i < filterKeys[key].length; i++) {
+							if (g[key] == filterKeys[key][i]) {
+								return 1;
 							}
 						}
-						return allKeysEmpty;
 					}
+					return allKeysEmpty;
+				}
 
-				});
-			}).entries(data);
+			});
+		}).entries(data);
 }
 
 //--CREATING GRAPHS SECTION--//
@@ -497,18 +479,8 @@ function createGraphFromKey(key, chartId, filterKeys) {
 					'height': height
 				});
 
-			function titleDrag(d) {
-				var x = d3.event.x;
-				var y = d3.event.y;
-				var chartDiv = document.getElementById(chartId);
-				var top = chartDiv.offsetTop;
-				var left = chartDiv.offsetLeft - width / 2;
-				chartDiv.setAttribute("style", "position:absolute; TOP:" + (top + y) + "px; LEFT:" + (left + x) + "px;" + setChartDivStyle);
-				chartMoved(chartId);
-			}
-
 			var drag = d3.behavior.drag()
-				.on("drag", titleDrag);
+				.on("drag", getTitleDragFunction(chartId, width));
 
 			if (d3.select(chartNum).selectAll(".chart-title").size() == 0) {
 				d3.select(chartNum)
@@ -531,7 +503,6 @@ function createGraphFromKey(key, chartId, filterKeys) {
 		}, function() {
 			d3.selectAll(chartNum + " .nv-bar").on('mousedown', function(d) {
 				onBarSelection(chartId, this, key, d.key);
-
 			});
 		});
 	});
@@ -555,7 +526,7 @@ function createHeatmapFromKey(chartId, key1, key2, filterKeys) {
 		y = d3.scale.ordinal().rangeBands([height, 0]),
 		z = d3.scale.linear().range(["white", "steelblue"]);
 
-   var chartNum = '#' + chartId + " svg";
+	var chartNum = '#' + chartId + " svg";
 
 	var svg = d3.select(chartNum)
 		.attr("width", width + margin.left + margin.right)
@@ -568,7 +539,7 @@ function createHeatmapFromKey(chartId, key1, key2, filterKeys) {
 
 		var buckets = [];
 
-		var rolledUp = applyFilters([key1,key2], chartId, data, filterKeys);
+		var rolledUp = applyFilters([key1, key2], chartId, data, filterKeys);
 
 		rolledUp.forEach(function(d) {
 			d.values.forEach(function(d2) {
@@ -581,10 +552,10 @@ function createHeatmapFromKey(chartId, key1, key2, filterKeys) {
 		});
 
 		// Compute the scale domains.
-		x.domain(buckets.map(function (d) {
+		x.domain(buckets.map(function(d) {
 			return d[key2];
 		}));
-		y.domain(buckets.map(function (d) {
+		y.domain(buckets.map(function(d) {
 			return d[key1];
 		}));
 		z.domain([0, d3.max(buckets, function(d) {
@@ -597,7 +568,7 @@ function createHeatmapFromKey(chartId, key1, key2, filterKeys) {
 			.data(buckets)
 			.enter().append("rect")
 			.attr("class", "tile")
-			.on("click", function(e){
+			.on("click", function(e) {
 				onTileSelection(chartId, this, key1, key2, e[key1], e[key2]);
 			})
 			.attr("x", function(d) {
@@ -613,10 +584,9 @@ function createHeatmapFromKey(chartId, key1, key2, filterKeys) {
 			.attr("height", y.rangeBand())
 			.style("fill", function(d) {
 				return z(d.count);
-			})
-			;
+			});
 
-		$("#"+chartId+" .legend").empty();
+		$("#" + chartId + " .legend").empty();
 
 		// Add a legend for the color values.
 		var legend = svg.selectAll(".legend")
@@ -670,39 +640,41 @@ function createHeatmapFromKey(chartId, key1, key2, filterKeys) {
 			.text(key1);
 	});
 
-	function titleDrag(d) {
-				var x = d3.event.x;
-				var y = d3.event.y;
-				var chartDiv = document.getElementById(chartId);
-				var top = chartDiv.offsetTop;
-				var left = chartDiv.offsetLeft - width / 2;
-				chartDiv.setAttribute("style", "position:absolute; TOP:" + (top + y) + "px; LEFT:" + (left + x) + "px;" + setChartDivStyle);
-				chartMoved(chartId);
-			}
+	var drag = d3.behavior.drag()
+		.on("drag", getTitleDragFunction(chartId, width));
 
-			var drag = d3.behavior.drag()
-				.on("drag", titleDrag);
-
-			if (d3.select(chartNum).selectAll(".chart-title").size() == 0) {
-				d3.select(chartNum)
-					.append("text")
-					.attr("x", width / 2)
-					.attr("y", 11)
-					.attr("text-anchor", "middle")
-					.attr("class", "chart-title")
-					.text(chartId + " (" + key1 + "/" + key2 + ")")
-					.call(drag);
-			}
+	if (d3.select(chartNum).selectAll(".chart-title").size() == 0) {
+		d3.select(chartNum)
+			.append("text")
+			.attr("x", width / 2)
+			.attr("y", 11)
+			.attr("text-anchor", "middle")
+			.attr("class", "chart-title")
+			.text(chartId + " (" + key1 + "/" + key2 + ")")
+			.call(drag);
+	}
 
 }
 
-function createHeatmap(chartId,key1, key2) {
+function getTitleDragFunction(chartId, width) {
+	return function titleDrag(d) {
+		var x = d3.event.x;
+		var y = d3.event.y;
+		var chartDiv = document.getElementById(chartId);
+		var top = chartDiv.offsetTop;
+		var left = chartDiv.offsetLeft - width / 2;
+		chartDiv.setAttribute("style", "position:absolute; TOP:" + (top + y) + "px; LEFT:" + (left + x) + "px;" + setChartDivStyle);
+		chartMoved(chartId);
+	};
+}
+
+function createHeatmap(chartId, key1, key2) {
 	createHeatmapFromKey(chartId, key1, key2, {});
 	charts[chartId] = [key1, key2];
 }
 
 function heatmapId(d, chartId, key1, key2) {
-	return HEATMAP_PREFIX+chartId+"-"+d[key1]+"-"+d[key2];
+	return HEATMAP_PREFIX + chartId + "-" + d[key1] + "-" + d[key2];
 }
 
 //--HANDLE SELECTION AND FILTERS SECTION--//
@@ -741,20 +713,27 @@ function onTileSelection(chartId, tile, key1, key2, val1, val2) {
 
 function onBarSelection(chartId, bar, key, val) {
 	//Determine whether the bar is being selected or deselected
+	var multiSelect = d3.event.ctrlKey;
 	var isSelected;
-	if (chartId in selected) {
-		isSelected = selected[chartId].val != val;
+	if (multiSelect) {
+		isSelected = true;
+	} else if (chartId in selected) {
+		isSelected = ! (val in selected[chartId].val);//selected[chartId].val != val;
 	} else {
 		isSelected = true;
 	}
 
-	deselectSelected(chartId);
-
+	if (!multiSelect) {
+		deselectSelected(chartId);
+	}
+	
 	if (isSelected) {
 
-		if (chartId in selected) {
+		if (chartId in selected && !multiSelect) {
 			for (var i = 0; i < chartConnections[chartId].length; i++) {
-				propogateDeselectionDownwards(chartConnections[chartId][i], selected[chartId].key, selected[chartId].val);
+				for(var j = 0;j < selected[chartId].val.length; j++) {
+					propogateDeselectionDownwards(chartConnections[chartId][i], selected[chartId].key, selected[chartId].val[j]);
+				}
 			}
 		}
 
@@ -781,10 +760,6 @@ function filterDownstreamChart(chartId, chartId2, key, val, isSelected) {
 	}
 	filter = filters[chartId2];
 
-	//prevent infinite loops if charts are parents and children of each other
-	if (isSelected && filter[key] == val) {
-		//return;
-	}
 	if (isSelected) {
 		propogateFiltersDownward(chartId, chartId2, key, val);
 	} else {

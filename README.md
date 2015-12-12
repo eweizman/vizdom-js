@@ -16,7 +16,7 @@
 ## Implementation Details 
 ##### *(last updated 12/11/15 by eweizman)*
 
-###Libraries Used:
+### Libraries Used:
 * [NVD3](http://nvd3.org/)
 	* Library built on top of D3 for faster and simpler full-featured graph creation
 		* However, only supports a small number of types of graphs
@@ -29,9 +29,20 @@
 * [JQuery](https://jquery.com/)
 	* For code simplicity and basic ease of implementation
 
-Right now the code receives all data from *data/fakedata.csv*, which is filled with dummy data generated from *data/fakedatagen.py*. The source file is defined in the global variable csv in *script.js*.
+### Structure
 
 All relevant code is contained within *script.js*.
 
+#### Graph Creation
+
+Bar graphs are created when a button describing the the graph should be connected to is dragged out onto the canvas. The document body (which is the drop event listener) then creates a new graph with the given key.
+Every new graph is made in a new div, with its own svg canvas within it.
+
+#### Data Retrieval 
+
+Right now, data retrieval is rudimentary in anticipation of connection to the back end. 
+
+The source file from which data is retrieved is defined in the global variable *csv* in *script.js*. Currently, the code receives all data from *data/fakedata.csv*, which is filled with dummy data generated from *data/fakedatagen.py*. 
+
 ## Known Issues
-* Cascading filtering w/ heatmaps
+* Cascading deselection of filters w/ heatmaps
