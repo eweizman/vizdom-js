@@ -271,7 +271,9 @@ function connectGraph(source, dest) {
 			filterDownstreamChart(source, dest, selected[source].key[0], selected[source].val[0], true);
 			filterDownstreamChart(source, dest, selected[source].key[1], selected[source].val[1], true);
 		} else {
-			filterDownstreamChart(source, dest, selected[source].key, selected[source].val, true);
+			for(var i=0;i < selected[source].val.length;i++) {
+				filterDownstreamChart(source, dest, selected[source].key, selected[source].val[i], true);
+			}
 		}
 	} else if (source in filters) {
 		for (var key in filters[source]) {
@@ -329,7 +331,9 @@ function removeConnection(source, dest) {
 		removeFilter(dest, selected[source].key[0], selected[source].val[0]);
 		removeFilter(dest, selected[source].key[1], selected[source].val[1]);
 	} else {
-		removeFilter(dest, selected[source].key, selected[source].val);
+		for(var i=0;i<selected[source].val.length;i++) {
+			removeFilter(dest, selected[source].key, selected[source].val);
+		}
 	}
 
 }
@@ -495,7 +499,9 @@ function createGraphFromKey(key, chartId, filterKeys) {
 
 
 			if (chartId in selected) {
-				d3.select(selected[chartId].bar).style("fill", "red");
+				for(var i=0;i<selected[chartId].bar.length;i++) {
+					d3.select(selected[chartId].bar[0]).style("fill", "red");
+				}
 			}
 
 			nv.utils.windowResize(chart.update);
@@ -714,18 +720,20 @@ function onTileSelection(chartId, tile, key1, key2, val1, val2) {
 function onBarSelection(chartId, bar, key, val) {
 	//Determine whether the bar is being selected or deselected
 	var multiSelect = d3.event.ctrlKey;
+	var valIndex = -1; 
 	var isSelected;
-	if (multiSelect) {
-		isSelected = true;
-	} else if (chartId in selected) {
-		isSelected = ! (val in selected[chartId].val);//selected[chartId].val != val;
+	if (chartId in selected) {
+		valIndex = selected[chartId].val.indexOf(val);
+		isSelected = (valIndex == -1);//selected[chartId].val != val;
 	} else {
 		isSelected = true;
 	}
 
-	if (!multiSelect) {
+	if (!isSelected && multiSelect) {
+		deselectSingleSelected(chartId, valIndex);
+	} else if (!multiSelect) {
 		deselectSelected(chartId);
-	}
+	} 
 	
 	if (isSelected) {
 
@@ -738,9 +746,16 @@ function onBarSelection(chartId, bar, key, val) {
 		}
 
 		//Return previously selected bar to red color
-		emphasizeSelectedBar(chartId, bar, key, val);
+		emphasizeSelectedBar(chartId, bar, key, val, multiSelect);
 	} else {
-		delete selected[chartId];
+		if (multiSelect && selected[chartId].val.length > 1) {
+			selected[chartId].val.splice(valIndex, 1);
+			selected[chartId].bar.splice(valIndex, 1);
+			selected[chartId].color.splice(valIndex, 1);
+		} else {
+			delete selected[chartId];
+		}
+		
 	}
 
 	//Find all those charts downstream to current chart
@@ -835,13 +850,26 @@ function propogateDeselectionDownwards(chartId, key, val) {
 	filters[chartId][key].splice(filters[chartId][key].indexOf(val), 1);
 }
 
-function emphasizeSelectedBar(chartId, bar, key, val) {
-	selected[chartId] = {
-		key: key,
-		val: val,
-		bar: bar,
-		color: d3.select(bar).style("fill")
-	};
+function emphasizeSelectedBar(chartId, bar, key, val, multiSelect) {
+	var color = d3.select(bar).style("fill");
+	if (multiSelect && chartId in selected) {
+		selected[chartId].val.push(val);
+		selected[chartId].bar.push(bar);
+		selected[chartId].color.push(color);
+	}
+	else {
+		var vals = [val];
+		var bars = [bar];
+		var colors = [color];
+
+		selected[chartId] = {
+			key: key,
+			val: vals,
+			bar: bars,
+			color: colors
+		};
+	}
+	
 	d3.select(bar).style("fill", "red");
 }
 
@@ -863,6 +891,15 @@ function emphasizeSelectedTile(chartId, tile, key1, key2, val1, val2) {
 
 function deselectSelected(chartId) {
 	if (chartId in selected) {
-		d3.select(selected[chartId].bar).style("fill", selected[chartId].color);
+		for (var i = 0;i<selected[chartId].bar.length;i++) {
+			d3.select(selected[chartId].bar[i]).style("fill", selected[chartId].color[i]);
+		}
+		
+	}
+}
+
+function deselectSingleSelected(chartId, i) {
+	if (chartId in selected) {
+		d3.select(selected[chartId].bar[i]).style("fill", selected[chartId].color[i]);
 	}
 }
