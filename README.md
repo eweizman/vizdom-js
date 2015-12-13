@@ -16,7 +16,7 @@
 	* Drag body of graph to trash can to delete graph
 
 ## Implementation Details 
-##### *(last updated 12/11/15 by eweizman)*
+##### *(last updated 12/13/15 by eweizman)*
 
 ### Libraries Used:
 * [NVD3](http://nvd3.org/)
@@ -53,7 +53,19 @@ All filters are held in *filters*, which is an associative array with the follow
 
 ##### Setting Filters via Data Selection
 
+When a bar is selected, onBarSelection is called. If the control key was being held down, then multiselection mode is in effect. 
+Multiselection works with the following rules:
+* Multiselection off
+	* Selected bar clicked on -> Deselection of all selected bars
+	* Unselected bar clicked on -> Deselection of all selected bars + selection of clicked on bar
+* Multiselection on
+
 ##### Filtering Data
+
+## Future Goals
+* New chart types
+	* Maps
 
 ## Known Issues
 * Cascading deselection of filters w/ heatmaps
+* jsPlumb.repaint has a bug, so when a chart is moved, jsPlumb.repaintEverything() is called. This is less efficient, but a reasonable solution for now.

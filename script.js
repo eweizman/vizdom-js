@@ -880,6 +880,7 @@ function propogateDeselectionDownwards(chartId, key, val) {
 	filters[chartId][key].splice(filters[chartId][key].indexOf(val), 1);
 }
 
+// Make the selected bar red and modify selected to update the selection
 function emphasizeSelectedBar(chartId, bar, key, val, multiSelect) {
 	var color = d3.select(bar).style("fill");
 	if (multiSelect && chartId in selected) {
@@ -902,13 +903,6 @@ function emphasizeSelectedBar(chartId, bar, key, val, multiSelect) {
 	
 	d3.select(bar).style("fill", "red");
 }
-
-// Emphasize the selected tile without modifying selected
-/*function emphasizeSelectedTileIndependantly(chartId) {
-	if (chartId in selected) {
-		d3.select(selected[chartId].bar).style("fill", "red");
-	}
-}*/
 
 //Make the selected tile red and modify selected to update the selection
 function emphasizeSelectedTile(chartId, tile, key1, key2, val1, val2, multiSelect) {
@@ -935,6 +929,7 @@ function emphasizeSelectedTile(chartId, tile, key1, key2, val1, val2, multiSelec
 	d3.select(tile).style("fill", "red");
 }
 
+// Change all selected to their original colors
 function deselectSelected(chartId) {
 	if (chartId in selected) {
 		for (var i = 0;i<selected[chartId].bar.length;i++) {
@@ -944,6 +939,7 @@ function deselectSelected(chartId) {
 	}
 }
 
+// Change the selected with index i to its original color
 function deselectSingleSelected(chartId, i) {
 	if (chartId in selected) {
 		d3.select(selected[chartId].bar[i]).style("fill", selected[chartId].color[i]);
