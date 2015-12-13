@@ -10,6 +10,8 @@
 * Filtering
 	* Drag body of graph onto another graph to make a filter connection
 	* Click the and/or button in the top left-hand corner of the graph to change the way multiple filters are applied in relation to each other.
+	* Click on a bar/tile to select a key/value pair and create a filter for all downstream charts
+	* Ctrl-Click on a bar/tile for multi-select
 * Graph Deletion
 	* Drag body of graph to trash can to delete graph
 
@@ -43,6 +45,15 @@ Every new graph is made in a new div, with its own svg canvas within it.
 Right now, data retrieval is rudimentary in anticipation of connection to the back end. 
 
 The source file from which data is retrieved is defined in the global variable *csv* in *script.js*. Currently, the code receives all data from *data/fakedata.csv*, which is filled with dummy data generated from *data/fakedatagen.py*. 
+
+#### Filtering
+
+All filters are held in *filters*, which is an associative array with the following structure:
+{chartId1: {key1: [val1,val2,...]}}
+
+##### Setting Filters via Data Selection
+
+##### Filtering Data
 
 ## Known Issues
 * Cascading deselection of filters w/ heatmaps

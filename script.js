@@ -42,8 +42,8 @@ var filters = {};
  * Contains the data for charts with data selected.
  * @key the id of the chart
  * @value An associative array containing selected data:
- * 		bar: the selected element
- * 		color: the color of the selected element before it was selected
+ * 		bars: the selected elements
+ * 		colors: the colors of the selected element before it was selected
  * 		key: key/s of selected element
  *		val: val/s of selected element
  * */
@@ -244,9 +244,12 @@ function dropChartFromChartId(chartId2) {
 				if (isHeatmap(chartId2)) {
 					return;
 				}
+				var chart2 = document.getElementById(chartId2);
+				var x2 = chart2.offsetLeft;
+				var y2 = chart2.offsetTop;
 				var key1 = charts[chartId2];
 				var key2 = ev.dataTransfer.getData("text");
-				newHeatmap(x, y, key1, key2);
+				newHeatmap(x2, y2, key1, key2);
 				deleteChart(chartId2);
 				break;
 			default:
@@ -685,43 +688,11 @@ function heatmapId(d, chartId, key1, key2) {
 
 //--HANDLE SELECTION AND FILTERS SECTION--//
 
-function onTileSelection(chartId, tile, key1, key2, val1, val2) {
-	var isSelected;
-	if (chartId in selected) {
-		isSelected = !(selected[chartId].val.indexOf(val1) != -1) || !(selected[chartId].val.indexOf(val2) != -1);
-	} else {
-		isSelected = true;
-	}
-
-	deselectSelected(chartId);
-
-	if (isSelected) {
-
-		if (chartId in selected) {
-			for (var i = 0; i < chartConnections[chartId].length; i++) {
-				propogateDeselectionDownwards(chartConnections[chartId][i], selected[chartId].key[0], selected[chartId].val[0]);
-				propogateDeselectionDownwards(chartConnections[chartId][i], selected[chartId].key[1], selected[chartId].val[1]);
-			}
-		}
-
-		emphasizeSelectedTile(chartId, tile, key1, key2, val1, val2);
-	} else {
-		delete selected[chartId];
-	}
-
-	//Find all those charts downstream to current chart
-	for (var charti = 0; charti < chartConnections[chartId].length; charti++) {
-		var chartId2 = chartConnections[chartId][charti];
-		filterDownstreamChart(chartId, chartId2, key1, val1, isSelected);
-		filterDownstreamChart(chartId, chartId2, key2, val2, isSelected);
-	}
-}
-
 function onBarSelection(chartId, bar, key, val) {
 	//Determine whether the bar is being selected or deselected
 	var multiSelect = d3.event.ctrlKey;
 	var valIndex = -1; 
-	var isSelected;
+	var isSelected; // has a bar been selected or deselected?
 	if (chartId in selected) {
 		valIndex = selected[chartId].val.indexOf(val);
 		isSelected = (valIndex == -1);//selected[chartId].val != val;
@@ -763,6 +734,69 @@ function onBarSelection(chartId, bar, key, val) {
 		var chartId2 = chartConnections[chartId][charti];
 		filterDownstreamChart(chartId, chartId2, key, val, isSelected);
 	}
+}
+
+function onTileSelection(chartId, tile, key1, key2, val1, val2) {
+	var isSelected;
+	var val2Index = -1; 
+	var multiSelect = d3.event.ctrlKey;
+
+	if (chartId in selected) {
+		valIndex = heatmapSelectedValuePairIndex(chartId, val1, val2);
+		isSelected = (valIndex == -1);
+	} else {
+		isSelected = true;
+	}
+
+	if (!isSelected && multiSelect) {
+		deselectSingleSelected(chartId, valIndex);
+	} else if (!multiSelect) {
+		deselectSelected(chartId);
+	} 
+
+	if (isSelected) {
+
+		//Anything that was selected beforehand must be un-selected
+		if (chartId in selected && !multiSelect) {
+			for (var i = 0; i < chartConnections[chartId].length; i++) {
+				for(var j =0;j < selected[chartId].val.length;j++){ 
+					propogateDeselectionDownwards(chartConnections[chartId][i], selected[chartId].key[0], selected[chartId].val[j][0]);
+					propogateDeselectionDownwards(chartConnections[chartId][i], selected[chartId].key[1], selected[chartId].val[j][1]);
+				}
+			}
+		}
+
+		emphasizeSelectedTile(chartId, tile, key1, key2, val1, val2, multiSelect);
+	} else {
+		if (multiSelect && selected[chartId].val.length > 1) {
+			selected[chartId].val.splice(valIndex, 1);
+			selected[chartId].bar.splice(valIndex, 1);
+			selected[chartId].color.splice(valIndex, 1);
+		} else {
+			delete selected[chartId];
+		}
+	}
+
+	//Find all those charts downstream to current chart
+	for (var charti = 0; charti < chartConnections[chartId].length; charti++) {
+		var chartId2 = chartConnections[chartId][charti];
+		filterDownstreamChart(chartId, chartId2, key1, val1, isSelected);
+		filterDownstreamChart(chartId, chartId2, key2, val2, isSelected);
+	}
+}
+
+function heatmapSelectedValuePairIndex(chartId, val1, val2) {
+	if (! (chartId in selected)) {
+		return -1;
+	}
+
+	for(var i=0;i<selected[chartId].val.length;i++) {
+		var valPair = selected[chartId].val[i];
+		if (valPair.indexOf(val1) != -1 && valPair.indexOf(val2) != -1) {
+			return i;
+		}
+	}
+	return -1;
 }
 
 function filterDownstreamChart(chartId, chartId2, key, val, isSelected) {
@@ -807,10 +841,6 @@ function propogateFiltersDownward(chartId, chartId2, key, val) {
 		filters[chartId2] = {};
 	}
 	filter = filters[chartId2];
-
-	/* if (chartId == chartId2 || filter[key] == val) {
-	     return;
-	 }*/
 
 	if (chartId == chartId2) {
 		return;
@@ -873,19 +903,35 @@ function emphasizeSelectedBar(chartId, bar, key, val, multiSelect) {
 	d3.select(bar).style("fill", "red");
 }
 
-function emphasizeSelectedTileIndependantly(chartId) {
+// Emphasize the selected tile without modifying selected
+/*function emphasizeSelectedTileIndependantly(chartId) {
 	if (chartId in selected) {
 		d3.select(selected[chartId].bar).style("fill", "red");
 	}
-}
+}*/
 
-function emphasizeSelectedTile(chartId, tile, key1, key2, val1, val2) {
-	selected[chartId] = {
-		key: [key1, key2],
-		val: [val1, val2],
-		bar: tile,
-		color: d3.select(tile).style("fill")
-	};
+//Make the selected tile red and modify selected to update the selection
+function emphasizeSelectedTile(chartId, tile, key1, key2, val1, val2, multiSelect) {
+
+	var color = d3.select(tile).style("fill");
+	if (multiSelect && chartId in selected) {
+		selected[chartId].val.push([val1,val2]);
+		selected[chartId].bar.push(tile);
+		selected[chartId].color.push(color);
+	}
+	else {
+		var vals = [[val1,val2]];
+		var bars = [tile];
+		var colors = [color];
+
+		selected[chartId] = {
+			key: [key1, key2],
+			val: vals,
+			bar: bars,
+			color: colors
+		};
+	}
+	
 	d3.select(tile).style("fill", "red");
 }
 
