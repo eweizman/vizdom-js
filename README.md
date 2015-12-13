@@ -59,8 +59,14 @@ Multiselection works with the following rules:
 	* Selected bar clicked on -> Deselection of all selected bars
 	* Unselected bar clicked on -> Deselection of all selected bars + selection of clicked on bar
 * Multiselection on
+	* Selected bar clicked on -> Deselection of clicked on bar
+	* Unselected bar clicked on -> Selection of clicked on bar
+
+When a tile is selected, onTileSelection is called. It works very similarly to bar selection. The main difference is that for every tile, two filters are applied/removed to every downstream chart.
 
 ##### Filtering Data
+
+Filters are passed down to downstream charts recursively.
 
 ## Future Goals
 * New chart types
@@ -68,4 +74,4 @@ Multiselection works with the following rules:
 
 ## Known Issues
 * Cascading deselection of filters w/ heatmaps
-* jsPlumb.repaint has a bug, so when a chart is moved, jsPlumb.repaintEverything() is called. This is less efficient, but a reasonable solution for now.
+* jsPlumb.repaint has a bug, so when a chart is moved, jsPlumb.repaintEverything() is called. This is less efficient, but a reasonable solution for now. This is located in *chartMoved(chartId)*.
