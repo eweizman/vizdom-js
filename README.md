@@ -53,7 +53,7 @@ All filters are held in *filters*, which is an associative array with the follow
 
 ##### Setting Filters via Data Selection
 
-When a bar is selected, onBarSelection is called. If the control key was being held down, then multiselection mode is in effect. 
+When a bar is selected, *onBarSelection* is called. If the control key was being held down, then multiselection mode is in effect. 
 Multiselection works with the following rules:
 * Multiselection off
 	* Selected bar clicked on -> Deselection of all selected bars
@@ -62,11 +62,15 @@ Multiselection works with the following rules:
 	* Selected bar clicked on -> Deselection of clicked on bar
 	* Unselected bar clicked on -> Selection of clicked on bar
 
-When a tile is selected, onTileSelection is called. It works very similarly to bar selection. The main difference is that for every tile, two filters are applied/removed to every downstream chart.
+The key helper method for filtering are filterDownstreamChart, which recursively propogates the given key/value pair to all connected charts as a filter. 
+
+To refresh a graph, the visual part of the graph is recreated using NVD3 or D3 (bar graphs/heatmaps respectively) taking the new filters into account.
+
+When a tile is selected, *onTileSelection* is called. It works very similarly to bar selection. The main difference is that for every tile, two filters are applied/removed to every downstream chart. This is because the two key/val pairs in each tile in a heatmap are treated as *independant filters*.
 
 ##### Filtering Data
 
-Filters are passed down to downstream charts recursively.
+D3 is used to apply filters to the data.
 
 ## Future Goals
 * New chart types

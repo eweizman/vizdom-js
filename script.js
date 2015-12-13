@@ -708,6 +708,7 @@ function onBarSelection(chartId, bar, key, val) {
 	
 	if (isSelected) {
 
+		// Deselect all other bars if multiselect is off
 		if (chartId in selected && !multiSelect) {
 			for (var i = 0; i < chartConnections[chartId].length; i++) {
 				for(var j = 0;j < selected[chartId].val.length; j++) {
@@ -716,7 +717,7 @@ function onBarSelection(chartId, bar, key, val) {
 			}
 		}
 
-		//Return previously selected bar to red color
+		//Return previously selected bar to red color, aand update selected
 		emphasizeSelectedBar(chartId, bar, key, val, multiSelect);
 	} else {
 		if (multiSelect && selected[chartId].val.length > 1) {
@@ -729,7 +730,7 @@ function onBarSelection(chartId, bar, key, val) {
 		
 	}
 
-	//Find all those charts downstream to current chart
+	//Find all those charts downstream to current chart, and update w/ the selected key/val
 	for (var charti = 0; charti < chartConnections[chartId].length; charti++) {
 		var chartId2 = chartConnections[chartId][charti];
 		filterDownstreamChart(chartId, chartId2, key, val, isSelected);
