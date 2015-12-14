@@ -410,6 +410,9 @@ function keyNest(key) {
 	}
 }
 
+/**
+* @filterKeys an associative array connecting the name of a key to an array of values
+* */
 function applyFilters(key, chartId, data, filterKeys) {
 	return keyNest(key)
 		.rollup(function(d) {
@@ -800,6 +803,11 @@ function heatmapSelectedValuePairIndex(chartId, val1, val2) {
 	return -1;
 }
 
+/** 
+* @chart1 The upstream chart
+* @chart2 The downstream chart
+* @isSelected whether or not the key/value pair was selected or deselected
+* */
 function filterDownstreamChart(chartId, chartId2, key, val, isSelected) {
 	//Add currently selected item to filter of downstream chart
 	var filter;

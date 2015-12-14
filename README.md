@@ -1,5 +1,5 @@
 # Javascript Implementation of Vizdom
-### eweizman, Fall 2015
+### eweizman, Brown University, Fall 2015
 
 #### Basic Usage Instructions
 * Graph Creation
@@ -38,7 +38,7 @@ All relevant code is contained within *script.js*.
 #### Graph Creation
 
 Bar graphs are created when a button describing the the graph should be connected to is dragged out onto the canvas. The document body (which is the drop event listener) then creates a new graph with the given key.
-Every new graph is made in a new div, with its own svg canvas within it.
+Every new graph is made in a new div, with its own svg canvas within it. The id of the div is the id of the chart, which is just "chart" + *#of
 
 #### Data Retrieval 
 
@@ -72,7 +72,11 @@ When a tile is selected, *onTileSelection* is called. It works very similarly to
 
 ##### Filtering Data
 
-D3 is used to apply filters to the data.
+D3 is used to apply filters to the data. This may need to change once the real data source has been hooked up to the front-end. Either that, or the back-end may need to mediate how much data it gives the front-end at once. 
+
+There are two types of ways to combine filters - AND and OR. These can be gotten by using *getFilterType(chartId)*, which reads the displayed string directly from the AND/OR button in the upper left hand corner of the chart div and matches it to the filter identifiers. The filter identifiers are defined by var AND_FILTER and OR_FILTER.
+
+Filtering happens in *applyFilters(key, chartId, data, filterKeys)*. Datapoints are excluded by returning 0 to a function passed to d3.sum. Filtering happens per key (i.e. appropriate values are and/or-ed across only their own keys).
 
 ## Future Goals
 * New chart types
