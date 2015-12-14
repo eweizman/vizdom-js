@@ -62,9 +62,11 @@ Multiselection works with the following rules:
 	* Selected bar clicked on -> Deselection of clicked on bar
 	* Unselected bar clicked on -> Selection of clicked on bar
 
-The key helper method for filtering are filterDownstreamChart, which recursively propogates the given key/value pair to all connected charts as a filter. 
+The key helper method for filtering is *filterDownstreamChart*, which recursively propogates the given key/value pair to all connected charts as a filter. *filterDownstreamChart* either propogates the filter downwards if the given key/value pair had been selected, or propogates the deselection downwards. 
 
-To refresh a graph, the visual part of the graph is recreated using NVD3 or D3 (bar graphs/heatmaps respectively) taking the new filters into account.
+To refresh a graph, the visual part of the graph is recreated using NVD3 or D3 (bar graphs/heatmaps respectively) taking the new filters into account. This is the functional purpose of *propogateGraphCreationDownwards*.
+
+
 
 When a tile is selected, *onTileSelection* is called. It works very similarly to bar selection. The main difference is that for every tile, two filters are applied/removed to every downstream chart. This is because the two key/val pairs in each tile in a heatmap are treated as *independant filters*.
 

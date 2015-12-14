@@ -801,8 +801,6 @@ function heatmapSelectedValuePairIndex(chartId, val1, val2) {
 }
 
 function filterDownstreamChart(chartId, chartId2, key, val, isSelected) {
-	//var chart2Key = charts[chartId2];
-
 	//Add currently selected item to filter of downstream chart
 	var filter;
 	if (!(chartId2 in filters)) {
@@ -819,6 +817,7 @@ function filterDownstreamChart(chartId, chartId2, key, val, isSelected) {
 	propogateGraphCreationDownwards(chartId2);
 }
 
+// Recursively refresh all downward stream charts
 function propogateGraphCreationDownwards(chartId) {
 	for (var i = 0; i < chartConnections[chartId].length; i++) {
 		var chartId2 = chartConnections[chartId][i];
