@@ -15,6 +15,8 @@
 * Graph Deletion
 	* Drag body of graph to trash can to delete graph
 
+To execute Vizdom, it should be run within a web server due to javascript file restrictions within D3. A simple way to run a local server with python is the [SimpleHTTPServer module](https://docs.python.org/2/library/basehttpserver.html#BaseHTTPServer.BaseHTTPRequestHandler).
+
 ## Implementation Details 
 ##### *(last updated 12/13/15 by eweizman)*
 
@@ -78,10 +80,12 @@ There are two types of ways to combine filters - AND and OR. These can be gotten
 
 Filtering happens in *applyFilters(key, chartId, data, filterKeys)*. Datapoints are excluded by returning 0 to a function passed to d3.sum. Filtering happens per key (i.e. appropriate values are and/or-ed across only their own keys).
 
+## Extension Tips
+
+
 ## Future Goals
 * New chart types
 	* Maps
 
 ## Known Issues
-* Cascading deselection of filters w/ heatmaps
 * jsPlumb.repaint has a bug, so when a chart is moved, jsPlumb.repaintEverything() is called. This is less efficient, but a reasonable solution for now. This is located in *chartMoved(chartId)*.

@@ -80,6 +80,7 @@ function addHeaderSelector() {
 	});
 }
 
+//Drag listener for header selector buttons
 function dragKeySelector(ev) {
 	if (ev.target.firstChild == null) {
 		return;
@@ -141,10 +142,12 @@ function newGraphDiv(x, y) {
 	return chartId;
 }
 
+//Returns whether or not the given chart is a heatmap
 function isHeatmap(chartId) {
 	return Array.isArray(charts[chartId]);
 }
 
+//Returns the function to be called if the AND/OR filter type button is toggled
 function filterButtonPressed(chartId) {
 	return function(e) {
 		getFilterTypeButton(chartId).firstChild.nodeValue = getFilterType(chartId) == AND_FILTER ? OR_FILTER : AND_FILTER;
@@ -395,6 +398,7 @@ function refreshAllChildGraphs(chartId) {
 	}
 }
 
+//Helper function to apply filters which provides the appropriate nest call result
 function keyNest(key) {
 	if (Array.isArray(key)) {
 		return d3.nest().key(function(d) {
@@ -777,7 +781,17 @@ function onTileSelection(chartId, tile, key1, key2, val1, val2) {
 			selected[chartId].bar.splice(valIndex, 1);
 			selected[chartId].color.splice(valIndex, 1);
 		} else {
+			var deselected = selected[chartId];
 			delete selected[chartId];
+			// Deselect any others that were selected during multiselect
+			if (Object.size(deselected) > 1) {
+				for (var i = 0; i < chartConnections[chartId].length; i++) {
+					for(var j =0;j < deselected.val.length;j++){ 
+						propogateDeselectionDownwards(chartConnections[chartId][i], deselected.key[0], deselected.val[j][0]);
+						propogateDeselectionDownwards(chartConnections[chartId][i], deselected.key[1], deselected.val[j][1]);
+					}
+				}
+			}
 		}
 	}
 
@@ -786,7 +800,11 @@ function onTileSelection(chartId, tile, key1, key2, val1, val2) {
 		var chartId2 = chartConnections[chartId][charti];
 		filterDownstreamChart(chartId, chartId2, key1, val1, isSelected);
 		filterDownstreamChart(chartId, chartId2, key2, val2, isSelected);
+		console.log(isSelected);
+		console.log(filters[chartId2]);
 	}
+
+
 }
 
 function heatmapSelectedValuePairIndex(chartId, val1, val2) {
