@@ -94,8 +94,10 @@ Much of the changes for Vizdom in the future will likely lie in the *createGraph
 
 It will likely be best design to keep the calculations and manipulations of data in the backend and encapsulated from the frontend, so that the frontend is blind to everything other than the data it has been given. Best judgement will apply.
 
+##### New Graph Types
 For an example of how a new type of graph was added with an entirely different method of creation and different types of data begin stored, see all heatmap related methods (i.e. *createHeatmapFromKey*, *onTileSelection*, how heatmaps are handled on *connectGraph*, etc.). When passing down information on the graph you are creating, it is useful to transfer data through drag/drop event *dataTransfer*s. Examples of their use can be found in *dragKeySelector* and *dropChartFromChartId*.
 
+##### Data Structures
 It will be important to keep in mind the current structure and function of the major data structures involved, which are all defined and explained at the top of *script.js*. They contain all information pertinent to graph interactions and filtering. 
 
 An example of something which might change as specifications do is the filters data structure. Currently, no distinction is made between a group of filters coming from one graph or a group of filters coming from multiple graphs. As/if properties change, the way filters are propogated (*propogateFiltersDownward*, *propogateDeselectionDownwards*) and the way they affect the data (*applyFilters*) must also change.
