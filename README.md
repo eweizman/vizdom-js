@@ -3,7 +3,7 @@
 
 #### Table of Contents
 
-	*[Basic Usage Instructions](#basic-usage-instructions)
+	* [Basic Usage Instructions](#basic-usage-instructions)
 
 #### Basic Usage Instructions
 * Graph Creation
