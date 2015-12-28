@@ -15,7 +15,7 @@
 * Graph Deletion
 	* Drag body of graph to trash can to delete graph
 
-To execute Vizdom, the project should be run within a web server due to javascript file restrictions within D3. A simple way to run a local server with python is the [SimpleHTTPServer module](https://docs.python.org/2/library/basehttpserver.html#BaseHTTPServer.BaseHTTPRequestHandler).
+To execute Vizdom, the project should be run within a web server due to javascript file restrictions within D3. A simple way to run a local server with python is the [SimpleHTTPServer](https://docs.python.org/2/library/basehttpserver.html#BaseHTTPServer.BaseHTTPRequestHandler) module.
 
 ## Implementation Details 
 ##### *(last updated 12/28/15 by eweizman)*
@@ -95,8 +95,8 @@ Much of the changes for Vizdom in the future will likely lie in the *createGraph
 For an example of how a new type of graph was added with an entirely different method of creation and different types of data begin stored, see all heatmap related methods (i.e. *createHeatmapFromKey*, *onTileSelection*, how heatmaps are handled on *connectGraph*, etc.). When passing down information on the graph you are creating, it is useful to transfer data through drag/drop event *dataTransfer*s. Examples of their use can be found in *dragKeySelector* and *dropChartFromChartId*.
 
 
-It will be important to keep in mind the current structure and function of the major data structures involved, which are all defined and explained at the top of *script.js*. 
-Keep in mind the existing structure of the data structures at the top of *script.js*, and which ones are updated as new graphs are created. For example, chart connections exist with in chartConnections and chartsConnected. Also, in the current structure of the filters data structure, no distinction is made between a group of filters coming from one graph or a group of filters coming from multiple graphs. As/if properties change, the way filters are propogated must also change.
+It will be important to keep in mind the current structure and function of the major data structures involved, which are all defined and explained at the top of *script.js*. They contain all information pertinent to graph interactions and filtering. 
+An example of something which might change as specifications do is the filters data structure. Currently, no distinction is made between a group of filters coming from one graph or a group of filters coming from multiple graphs. As/if properties change, the way filters are propogated (*propogateFiltersDownward*, *propogateDeselectionDownwards*) and the way they affect the data (*applyFilters*) must also change.
 
 ## Known Issues
 * jsPlumb.repaint has a bug, so when a chart is moved, jsPlumb.repaintEverything() is called. This is less efficient, but a reasonable solution for now. This is located in *chartMoved(chartId)*.
