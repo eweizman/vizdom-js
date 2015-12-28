@@ -1,6 +1,10 @@
 # Javascript Implementation of Vizdom
 ### eweizman, Brown University, Fall 2015
 
+#### Table of Contents
+
+	*[Basic Usage Instructions](#basic-usage-instructions)
+
 #### Basic Usage Instructions
 * Graph Creation
 	* Drag out key button to create new graph
