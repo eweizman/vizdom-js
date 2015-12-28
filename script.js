@@ -246,6 +246,8 @@ function deleteChart(chartId) {
 
 	jsPlumb.remove(chartId);
 
+	// Remove charts from data structures
+	// chart is not removed from charts to preserve each chart's identity and prevent collisions in a simple, easily understood manner
 	delete chartConnections[chartId];
 	delete chartsConnected[chartId];
 	delete filters[chartId];
