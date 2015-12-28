@@ -92,6 +92,8 @@ Filtering happens in *applyFilters(key, chartId, data, filterKeys)*. Datapoints 
 ## Extension Tips
 Much of the changes for Vizdom in the future will likely lie in the *createGraphFromKey* method. It is here that a bar graph is created by reading in the csv data using D3. Thus, if a new data source is defined (because the data has been augmented using a classifier or because the backend has been hooked up), it is the beginning of this method that will have to change. 
 
+For an example of how a new type of graph was added with an entirely different method of creation and different types of data begin stored, see all heatmap related methods (i.e. *createHeatmapFromKey*, *onTileSelection*, how heatmaps are handled on *connectGraph*, etc.). When passing down information on the graph you are creating, it is useful to transfer data through drag/drop event *dataTransfer*s. Examples of their use can be found in *dragKeySelector* and *dropChartFromChartId*.
+
 
 It will be important to keep in mind the current structure and function of the major data structures involved, which are all defined and explained at the top of *script.js*. 
 Keep in mind the existing structure of the data structures at the top of *script.js*, and which ones are updated as new graphs are created. For example, chart connections exist with in chartConnections and chartsConnected. Also, in the current structure of the filters data structure, no distinction is made between a group of filters coming from one graph or a group of filters coming from multiple graphs. As/if properties change, the way filters are propogated must also change.
