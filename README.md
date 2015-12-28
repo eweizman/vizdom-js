@@ -4,6 +4,20 @@
 #### Table of Contents
 
 * [Basic Usage Instructions](#basic-usage-instructions)
+* [Implementation Details](#implementation-details)
+	* [Libraries Used](#libraries-used)
+	* [Structure](#structure)
+		* [Graph Creation](#graph-creation)
+		* [Data Retrieval](#data-retrieval)
+		* [Filtering](#filtering)
+			* [Setting Filters via Data Selection](#setting-filters-via-data-selection)
+			* [Filtering Data](#filtering-data)
+* [Future Goals](#future-goals)
+* [Extension Tips](#extension-tips)
+	* [New Graph Types](#new-graph-types)
+	* [Data Structures](#data-structures)
+* [Known Issues](#known-issues)
+
 
 #### Basic Usage Instructions
 * Graph Creation
