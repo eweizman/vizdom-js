@@ -253,7 +253,8 @@ function deleteChart(chartId) {
 }
 
 /** 
-* Removes the connection between source and dest
+* Removes the internal connection between source and dest.
+* Currently in response to a change in jsPlumb.
 * @source the chartId of the upstream chart
 * @dest the chartId of the downstream chart
 * */
@@ -290,25 +291,29 @@ function removeConnection(source, dest) {
 
 }
 
+// The drop event handler for chart divs
 function dropChartFromChartId(chartId2) {
 	return function(ev) {
 		ev.preventDefault();
 		var x = ev.pageX,
 			y = ev.pageY;
 		switch (ev.dataTransfer.getData("type")) {
-			case "dragChart":
+			case "dragChart": // A chart was dropped onto the chart
 				var chartId1 = ev.dataTransfer.getData("chartId");
 				connectGraph(chartId1, chartId2);
 				break;
-			case "newGraph":
+			case "newGraph": // A header button was dropped onto the chart
 				if (isHeatmap(chartId2)) {
 					return;
 				}
 				var chart2 = document.getElementById(chartId2);
+
+				//Set the location of the chart to be the location of the initial chart, rather than the drop point
 				var x2 = chart2.offsetLeft;
 				var y2 = chart2.offsetTop;
-				var key1 = charts[chartId2];
-				var key2 = ev.dataTransfer.getData("text");
+
+				var key1 = charts[chartId2]; // Make the initial key in the heamtmap equal to that of the initial chart
+				var key2 = ev.dataTransfer.getData("text"); // Make the second key in the heatmap equal to the header button's value
 				newHeatmap(x2, y2, key1, key2);
 				deleteChart(chartId2);
 				break;
@@ -324,11 +329,15 @@ function chartMoved(chartId) {
 }
 
 function connectGraph(source, dest) {
-	if (source == dest || source == "" || dest == "" || chartConnections[source].indexOf(dest) > -1 || detectLoop(source, dest)) {
+	if (source == dest || source == "" || dest == "" || chartConnections[source].indexOf(dest) > -1 || detectLoop(source, dest)) { //make sure the drophandler has not handed us something illegal
 		return;
 	}
+
+	// Add the connection to the data structuers
 	chartConnections[source].push(dest);
 	chartsConnected[dest].push(source);
+
+	// Add in selection filters
 	if (source in selected) {
 		if (isHeatmap(source)) {
 			for(var i=0;i<selected[source].val.length;i++) {
@@ -341,6 +350,8 @@ function connectGraph(source, dest) {
 			}
 		}
 	} 
+
+	// Propogate existing filters downwards
 	if (source in filters) {
 		for (var key in filters[source]) {
 			for (var i = 0; i < filters[source][key].length; i++) {
@@ -350,6 +361,7 @@ function connectGraph(source, dest) {
 		}
 	}
 
+	//visually connect the two charts using jsPlumb
 	jsPlumb.connect({
 		source: source,
 		target: dest,
@@ -377,11 +389,14 @@ function connectGraph(source, dest) {
 			}]
 		]
 	}, arrow);
+
+	// Make sure that when the connection is detached, we internally disconnect them as well
 	jsPlumb.bind("connectionDetached", function(info, originalEvent) {
 		removeConnection(info.source.id, info.target.id);
 	});
 }
 
+// Remove a single filter from a graph, and propogate it downwards
 function removeFilter(chartId, key, val) {
 	filters[chartId][key].splice(filters[chartId][key].indexOf(val), 1);
 
@@ -392,10 +407,7 @@ function removeFilter(chartId, key, val) {
 	}
 }
 
-function getArrowId(source, dest) {
-	return source + dest + "connectionArrow";
-}
-
+// Make sure a chart is not upstream/downstream of itself
 function detectLoop(source, dest) {
 	if (source == dest) {
 		return true;
@@ -409,11 +421,6 @@ function detectLoop(source, dest) {
 		}
 	}
 	return false;
-}
-
-function createGraph(chartId, key) {
-	createGraphFromKey(key, chartId, {});
-	charts[chartId] = key;
 }
 
 function refreshGraph(chartId) {
@@ -493,19 +500,33 @@ function applyFilters(key, chartId, data, filterKeys) {
 
 //--CREATING GRAPHS SECTION--//
 
+/** 
+* Creates a graph with no filters
+* */
+function createGraph(chartId, key) {
+	createGraphFromKey(key, chartId, {});
+	charts[chartId] = key;
+}
+
+/**
+* Creates a new bar graph using the given set of keys as filters
+* @key the header value defining which values to display in the graph (i.e. the header button that was dragged out)
+* @filterKeys an associative array between keys and a list of values
+* */
 function createGraphFromKey(key, chartId, filterKeys) {
 	var chartNum = '#' + chartId + " svg";
 	d3.csv(csv, function(error, data) {
 		var group = applyFilters(key, chartId, data, filterKeys);
 
+		// Change the labels to be recognized by nvd3
 		group.forEach(function(d) {
 			d.label = d.key;
 			d.value = d.values;
 		})
 
-		var exampleData = [{
-			key: "totals",
-			values: group
+		var totalData = [{
+			key: "totals", // this is a bar graph with summed values
+			values: group // the grouped and filtered data
 		}];
 
 		nv.addGraph(function() {
@@ -524,7 +545,7 @@ function createGraphFromKey(key, chartId, filterKeys) {
 				.width(width)
 				.height(height);
 			d3.select(chartNum)
-				.datum(exampleData)
+				.datum(totalData)
 				.call(chart)
 				.style({
 					'width': width,
@@ -546,6 +567,7 @@ function createGraphFromKey(key, chartId, filterKeys) {
 			}
 
 
+			// Make sure all already selected bars appear red
 			if (chartId in selected) {
 				for(var i=0;i<selected[chartId].bar.length;i++) {
 					d3.select(selected[chartId].bar[0]).style("fill", "red");
@@ -555,6 +577,7 @@ function createGraphFromKey(key, chartId, filterKeys) {
 			nv.utils.windowResize(chart.update);
 			return chart;
 		}, function() {
+			// Set the bar selection handler
 			d3.selectAll(chartNum + " .nv-bar").on('mousedown', function(d) {
 				onBarSelection(chartId, this, key, d.key);
 			});
@@ -562,8 +585,18 @@ function createGraphFromKey(key, chartId, filterKeys) {
 	});
 }
 
+function createHeatmap(chartId, key1, key2) {
+	createHeatmapFromKey(chartId, key1, key2, {});
+	charts[chartId] = [key1, key2];
+}
+
+/**
+* Creates a new heatmap graph using the given set of keys as filters
+* @key1 the first header value defining which values to display in the graph
+* @key2 the second header value defining which values to display in the graph
+* @filterKeys an associative array between keys and a list of values
+* */
 function createHeatmapFromKey(chartId, key1, key2, filterKeys) {
-	//var width = 400, height = 300;
 	var margin = {
 			top: 20,
 			right: 90,
@@ -576,6 +609,7 @@ function createHeatmapFromKey(chartId, key1, key2, filterKeys) {
 	var parseDate = d3.time.format("%Y-%m-%d").parse,
 		formatDate = d3.time.format("%b %d");
 
+	// Axis scaling
 	var x = d3.scale.ordinal().rangeBands([0, width]),
 		y = d3.scale.ordinal().rangeBands([height, 0]),
 		z = d3.scale.linear().range(["white", "steelblue"]);
@@ -710,6 +744,7 @@ function createHeatmapFromKey(chartId, key1, key2, filterKeys) {
 
 }
 
+// Called when the title is dragged, and moves the graph to the new location
 function getTitleDragFunction(chartId, width) {
 	return function titleDrag(d) {
 		var x = d3.event.x;
@@ -722,17 +757,19 @@ function getTitleDragFunction(chartId, width) {
 	};
 }
 
-function createHeatmap(chartId, key1, key2) {
-	createHeatmapFromKey(chartId, key1, key2, {});
-	charts[chartId] = [key1, key2];
-}
-
+/**
+* Returns the HTML id for individual tiles in a heatmap
+* @d an associative map for the piece of data at that location
+* */
 function heatmapId(d, chartId, key1, key2) {
 	return HEATMAP_PREFIX + chartId + "-" + d[key1] + "-" + d[key2];
 }
 
 //--HANDLE SELECTION AND FILTERS SECTION--//
 
+/** 
+* Called when a given bar is selected
+* */
 function onBarSelection(chartId, bar, key, val) {
 	//Determine whether the bar is being selected or deselected
 	var multiSelect = d3.event.ctrlKey;
@@ -792,6 +829,9 @@ function onBarSelection(chartId, bar, key, val) {
 	}
 }
 
+/** 
+* Called when a given tile is selected
+* */
 function onTileSelection(chartId, tile, key1, key2, val1, val2) {
 	var isSelected;
 	var val2Index = -1; 
@@ -854,6 +894,10 @@ function onTileSelection(chartId, tile, key1, key2, val1, val2) {
 
 }
 
+/**
+* Find the index within selected of the given pair for a specific heatmap. 
+* @return -1 if not found
+* */
 function heatmapSelectedValuePairIndex(chartId, val1, val2) {
 	if (! (chartId in selected)) {
 		return -1;
@@ -890,7 +934,9 @@ function filterDownstreamChart(chartId, chartId2, key, val, isSelected) {
 	propogateGraphCreationDownwards(chartId2);
 }
 
-// Recursively refresh all downward stream charts
+/**
+* Recursively refresh all downward stream charts based on the current contents of filters
+**/
 function propogateGraphCreationDownwards(chartId) {
 	for (var i = 0; i < chartConnections[chartId].length; i++) {
 		var chartId2 = chartConnections[chartId][i];
@@ -909,6 +955,9 @@ function propogateGraphCreationDownwards(chartId) {
 	}
 }
 
+/**
+* Make sure the given filter is applied to all downstream connections
+* */
 function propogateFiltersDownward(chartId, chartId2, key, val) {
 	if (!(chartId2 in filters)) {
 		filters[chartId2] = {};
@@ -940,6 +989,9 @@ function propogateFiltersDownward(chartId, chartId2, key, val) {
 	}
 }
 
+/** 
+* Make sure the given filter is removed from all downstream connections
+* */
 function propogateDeselectionDownwards(chartId, key, val) {
 	if (!chartId in filters || !chartId in chartConnections) {
 		return;

@@ -41,7 +41,7 @@ All relevant code is contained within *script.js*.
 
 Bar graphs are created when a button describing the the graph should be connected to is dragged out onto the canvas. The document body (which is the drop event listener) then creates a new graph with the given key.
 Information is handed to the drag/drop events through the event's *dataTransfer* object.
-Every new graph is made in a new div, with its own svg canvas within it. The id of the div is the id of the chart, which is just "chart" + *#of
+Every new graph is made in a new div, with its own svg canvas within it. The id of the div is the id of the chart, which is just "chart" + *#of.
 
 #### Data Retrieval 
 
@@ -81,9 +81,6 @@ There are two types of ways to combine filters - AND and OR. These can be gotten
 
 Filtering happens in *applyFilters(key, chartId, data, filterKeys)*. Datapoints are excluded by returning 0 to a function passed to d3.sum. Filtering happens per key (i.e. appropriate values are and/or-ed across only their own keys).
 
-## Extension Tips
-Much of 
-
 ## Future Goals
 * Connection to existing Vizdom backend
 * Immediate visualization as the data loads
@@ -91,6 +88,13 @@ Much of
 	* Classifiers
 * New chart types
 	* Maps
+
+## Extension Tips
+Much of the changes for Vizdom in the future will likely lie in the *createGraphFromKey* method. It is here that a bar graph is created by reading in the csv data using D3. Thus, if a new data source is defined (because the data has been augmented using a classifier or because the backend has been hooked up), it is the beginning of this method that will have to change. 
+
+
+It will be important to keep in mind the current structure and function of the major data structures involved, which are all defined and explained at the top of *script.js*. 
+Keep in mind the existing structure of the data structures at the top of *script.js*, and which ones are updated as new graphs are created. For example, chart connections exist with in chartConnections and chartsConnected. Also, in the current structure of the filters data structure, no distinction is made between a group of filters coming from one graph or a group of filters coming from multiple graphs. As/if properties change, the way filters are propogated must also change.
 
 ## Known Issues
 * jsPlumb.repaint has a bug, so when a chart is moved, jsPlumb.repaintEverything() is called. This is less efficient, but a reasonable solution for now. This is located in *chartMoved(chartId)*.
