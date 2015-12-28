@@ -18,7 +18,7 @@
 To execute Vizdom, the project should be run within a web server due to javascript file restrictions within D3. A simple way to run a local server with python is the [SimpleHTTPServer module](https://docs.python.org/2/library/basehttpserver.html#BaseHTTPServer.BaseHTTPRequestHandler).
 
 ## Implementation Details 
-##### *(last updated 12/13/15 by eweizman)*
+##### *(last updated 12/28/15 by eweizman)*
 
 ### Libraries Used:
 * [NVD3](http://nvd3.org/)
