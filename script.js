@@ -1,3 +1,4 @@
+// Constants
 var AND_FILTER = "and";
 var OR_FILTER = "or";
 var HEATMAP_PREFIX = "heatmap";
@@ -45,15 +46,34 @@ var filters = {};
  * 		bars: the selected elements
  * 		colors: the colors of the selected element before it was selected
  * 		key: key/s of selected element
- *		val: val/s of selected element
+ *		val: arrays of val/s of selected elements
  * */
 var selected = {};
 
-var csv = "data/fakedata.csv";
+var csv = "data/fakedata.csv"; //The file from which the data will be read
 
 var setChartDivStyle = "border:1px solid black;padding-top:10px"; // Common style between all charts
 
 var chartTrash = document.getElementById("chart_trash");
+
+// Drag listener for the trash can
+function dragTrash(ev) {
+	ev.preventDefault(); //prevents the default dragover response from happening to better receive drop events
+}
+
+// Drop listener for the trash icon
+function dropTrash(ev) {
+	ev.preventDefault();
+	switch (ev.dataTransfer.getData("type")) {
+		case "dragChart":
+			var chartId = ev.dataTransfer.getData("chartId");
+			deleteChart(chartId);
+			break;
+		default:
+			break;
+	}
+}
+
 chartTrash.addEventListener('drop', dropTrash, false);
 chartTrash.addEventListener('dragover', dragTrash, false);
 
@@ -90,89 +110,7 @@ function dragKeySelector(ev) {
 	ev.dataTransfer.setData("currentGraphNum", Object.size(charts));
 }
 
-
-function allowDrop(ev) {
-	ev.preventDefault();
-}
-
-function dragOver(ev) {
-	ev.preventDefault();
-}
-
-function newGraph(x, y, key) {
-	var chartId = newGraphDiv(x, y);
-	createGraph(chartId, key);
-}
-
-function newHeatmap(x, y, key1, key2) {
-	var chartId = newGraphDiv(x, y);
-	createHeatmap(chartId, key1, key2);
-}
-
-function newGraphDiv(x, y) {
-	var chartId = "chart" + (Object.size(charts) + 1);
-	charts[chartId] = "";
-	chartConnections[chartId] = [];
-	chartsConnected[chartId] = [];
-	var newGraphDiv = document.createElement("div");
-	newGraphDiv.setAttribute("id", chartId);
-
-	newGraphDiv.setAttribute("style", "position:absolute; TOP:" + y + "px; LEFT:" + x + "px;" + setChartDivStyle);
-
-	var filter = document.createElement("button");
-	filter.setAttribute("type", "button");
-	filter.appendChild(document.createTextNode(AND_FILTER));
-	filter.setAttribute("id", getFilterTypeButtonId(chartId));
-	filter.setAttribute("style", "position:absolute");
-	filter.onclick = filterButtonPressed(chartId);
-
-	var svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-	svg.setAttribute('xmlns:xlink', 'http://www.w3.org/1999/xlink');
-	newGraphDiv.appendChild(filter);
-	newGraphDiv.appendChild(svg);
-
-	newGraphDiv.setAttribute("draggable", "true");
-	newGraphDiv.setAttribute("ondragstart", "dragChart(event)");
-	newGraphDiv.addEventListener("drop", dropChartFromChartId(chartId), false);
-
-	var body = document.getElementById("body");
-	var newGraphButton = document.getElementById("newGraphButton");
-
-	body.insertBefore(newGraphDiv, newGraphButton);
-	return chartId;
-}
-
-//Returns whether or not the given chart is a heatmap
-function isHeatmap(chartId) {
-	return Array.isArray(charts[chartId]);
-}
-
-//Returns the function to be called if the AND/OR filter type button is toggled
-function filterButtonPressed(chartId) {
-	return function(e) {
-		getFilterTypeButton(chartId).firstChild.nodeValue = getFilterType(chartId) == AND_FILTER ? OR_FILTER : AND_FILTER;
-		refreshGraph(chartId);
-	}
-}
-
-function getFilterTypeButtonId(chartId) {
-	return "filterTypeButton" + chartId;
-}
-
-function getFilterTypeButton(chartId) {
-	return document.getElementById(getFilterTypeButtonId(chartId));
-}
-
-function getFilterType(chartId) {
-	return getFilterTypeButton(chartId).firstChild.nodeValue;
-}
-
-function dragChart(ev) {
-	ev.dataTransfer.setData("type", "dragChart");
-	ev.dataTransfer.setData("chartId", ev.target.id);
-}
-
-// Handles drop events for the back canvas
+// Drop event handler for the document body
 function drop(ev) {
 	ev.preventDefault();
 	var x = ev.pageX,
@@ -191,36 +129,117 @@ function drop(ev) {
 	}
 }
 
-function dragTrash(ev) {
+// Dragover handler for document body
+function dragOver(ev) {
 	ev.preventDefault();
-	switch (ev.dataTransfer.getData("type")) {
-		case "dragChart":
-			//set icon image to open trash
-			break;
-		default:
-			break;
+}
+
+function allowDrop(ev) {
+	ev.preventDefault();
+}
+
+/**
+* Creats a new bar graph at the given location
+* @x,y the specified pixel location on the screen
+* */
+function newGraph(x, y, key) {
+	var chartId = newGraphDiv(x, y);
+	createGraph(chartId, key);
+}
+
+/**
+* Creates a new heatmap at the given location
+* @x,y the specified pixel location on the screen
+* */
+function newHeatmap(x, y, key1, key2) {
+	var chartId = newGraphDiv(x, y);
+	createHeatmap(chartId, key1, key2);
+}
+
+// Creates the shell div for a new graph, setting basic common properties
+function newGraphDiv(x, y) {
+	// Set the id of the chart
+	var chartId = "chart" + (Object.size(charts) + 1);
+	var newGraphDiv = document.createElement("div");
+	newGraphDiv.setAttribute("id", chartId);
+
+	// Set placeholders for datastructures
+	charts[chartId] = "";
+	chartConnections[chartId] = [];
+	chartsConnected[chartId] = [];
+
+	// Set the location of the div, along with common styling, defined above
+	newGraphDiv.setAttribute("style", "position:absolute; TOP:" + y + "px; LEFT:" + x + "px;" + setChartDivStyle);
+
+	// Set filter type button
+	var filter = document.createElement("button");
+	filter.setAttribute("type", "button");
+	filter.appendChild(document.createTextNode(AND_FILTER));
+	filter.setAttribute("id", getFilterTypeButtonId(chartId));
+	filter.setAttribute("style", "position:absolute");
+	filter.onclick = filterButtonPressed(chartId);
+
+	// Add svg canvas to chart div
+	var svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+	svg.setAttribute('xmlns:xlink', 'http://www.w3.org/1999/xlink');
+	newGraphDiv.appendChild(filter);
+	newGraphDiv.appendChild(svg);
+
+	newGraphDiv.setAttribute("draggable", "true");
+	newGraphDiv.setAttribute("ondragstart", "dragChart(event)");
+	newGraphDiv.addEventListener("drop", dropChartFromChartId(chartId), false);
+
+	var body = document.getElementById("body");
+	var newGraphButton = document.getElementById("newGraphButton");
+
+	body.insertBefore(newGraphDiv, newGraphButton);
+	return chartId;
+}
+
+// Drag handler for chart div
+function dragChart(ev) {
+	ev.dataTransfer.setData("type", "dragChart");
+	ev.dataTransfer.setData("chartId", ev.target.id);
+}
+
+//Returns the function to be called if the AND/OR filter type button is toggled
+function filterButtonPressed(chartId) {
+	return function(e) {
+		getFilterTypeButton(chartId).firstChild.nodeValue = getFilterType(chartId) == AND_FILTER ? OR_FILTER : AND_FILTER;
+		refreshGraph(chartId);
 	}
 }
 
-function dropTrash(ev) {
-	ev.preventDefault();
-	switch (ev.dataTransfer.getData("type")) {
-		case "dragChart":
-			var chartId = ev.dataTransfer.getData("chartId");
-			deleteChart(chartId);
-			break;
-		default:
-			break;
-	}
+// Returns the HTML id of a given chart's filter button
+function getFilterTypeButtonId(chartId) {
+	return "filterTypeButton" + chartId;
+}
+
+// Returns the fitler button
+function getFilterTypeButton(chartId) {
+	return document.getElementById(getFilterTypeButtonId(chartId));
+}
+
+// Returns the contents of the filter button of the given chart id as filter type (AND vs OR)
+function getFilterType(chartId) {
+	return getFilterTypeButton(chartId).firstChild.nodeValue;
+}
+
+//Returns whether or not the given chart is a heatmap
+function isHeatmap(chartId) {
+	return Array.isArray(charts[chartId]);
 }
 
 //--CHART MANAGEMENT--//
 
 function deleteChart(chartId) {
+
+	//Remove all upstream connections
 	for (var i = 0; i < chartsConnected[chartId].length; i++) {
 		removeConnection(chartsConnected[chartId][i], chartId);
 	}
 
+	// Remove all downstream connections
 	for (var i = 0; i < chartConnections[chartId].length; i++) {
 		removeConnection(chartId, chartConnections[chartId][i]);
 	}
@@ -231,6 +250,44 @@ function deleteChart(chartId) {
 	delete chartsConnected[chartId];
 	delete filters[chartId];
 	delete selected[chartId];
+}
+
+/** 
+* Removes the connection between source and dest
+* @source the chartId of the upstream chart
+* @dest the chartId of the downstream chart
+* */
+function removeConnection(source, dest) {
+	if (chartConnections[source].indexOf(dest) == -1) {
+		return;
+	}
+	// Remove the connection from the data structures
+	chartConnections[source].splice(chartConnections[source].indexOf(dest), 1);
+	chartsConnected[dest].splice(chartsConnected[dest].indexOf(source), 1);
+
+	// Remove all upstream filters
+	for (var filterKey in filters[source]) {
+		for(var valI = 0 ; valI < filters[source][filterKey].length ; valI++) {
+			removeFilter(dest, filterKey, filters[source][filterKey][valI]);
+		}
+	}
+
+	if (selected[source] == undefined) { //nothing was selected
+		return;
+	}
+
+	// Remove any selection filters
+	if (isHeatmap(source)) {
+		for(var i=0;i<selected[source].val.length;i++) {
+			removeFilter(dest, selected[source].key[0], selected[source].val[i][0]);
+			removeFilter(dest, selected[source].key[1], selected[source].val[i][1]);
+		}
+	} else {
+		for(var i=0;i<selected[source].val.length;i++) {
+			removeFilter(dest, selected[source].key, selected[source].val[i]);
+		}
+	}
+
 }
 
 function dropChartFromChartId(chartId2) {
@@ -267,21 +324,24 @@ function chartMoved(chartId) {
 }
 
 function connectGraph(source, dest) {
-	if (source == dest || chartConnections[source].indexOf(dest) > -1 || detectLoop(source, dest)) {
+	if (source == dest || source == "" || dest == "" || chartConnections[source].indexOf(dest) > -1 || detectLoop(source, dest)) {
 		return;
 	}
 	chartConnections[source].push(dest);
 	chartsConnected[dest].push(source);
 	if (source in selected) {
-		if (Array.isArray(selected[source].key)) {
-			filterDownstreamChart(source, dest, selected[source].key[0], selected[source].val[0], true);
-			filterDownstreamChart(source, dest, selected[source].key[1], selected[source].val[1], true);
+		if (isHeatmap(source)) {
+			for(var i=0;i<selected[source].val.length;i++) {
+				filterDownstreamChart(source, dest, selected[source].key[0], selected[source].val[i][0], true);
+				filterDownstreamChart(source, dest, selected[source].key[1], selected[source].val[i][1], true);
+			}
 		} else {
 			for(var i=0;i < selected[source].val.length;i++) {
 				filterDownstreamChart(source, dest, selected[source].key, selected[source].val[i], true);
 			}
 		}
-	} else if (source in filters) {
+	} 
+	if (source in filters) {
 		for (var key in filters[source]) {
 			for (var i = 0; i < filters[source][key].length; i++) {
 				propogateFiltersDownward(source, dest, key, filters[source][key][i]);
@@ -320,28 +380,6 @@ function connectGraph(source, dest) {
 	jsPlumb.bind("connectionDetached", function(info, originalEvent) {
 		removeConnection(info.source.id, info.target.id);
 	});
-}
-
-function removeConnection(source, dest) {
-	if (chartConnections[source].indexOf(dest) == -1) {
-		return;
-	}
-	chartConnections[source].splice(chartConnections[source].indexOf(dest), 1);
-	chartsConnected[dest].splice(chartsConnected[dest].indexOf(source), 1);
-
-	if (selected[source] == undefined) { //nothing was selected
-		return;
-	}
-
-	if (isHeatmap(source)) {
-		removeFilter(dest, selected[source].key[0], selected[source].val[0]);
-		removeFilter(dest, selected[source].key[1], selected[source].val[1]);
-	} else {
-		for(var i=0;i<selected[source].val.length;i++) {
-			removeFilter(dest, selected[source].key, selected[source].val);
-		}
-	}
-
 }
 
 function removeFilter(chartId, key, val) {
@@ -732,7 +770,17 @@ function onBarSelection(chartId, bar, key, val) {
 			selected[chartId].bar.splice(valIndex, 1);
 			selected[chartId].color.splice(valIndex, 1);
 		} else {
+			var deselected = selected[chartId];
 			delete selected[chartId];
+			
+			// Deselect any others that were selected during multiselect
+			if (Object.size(deselected) > 1) {
+				for (var i = 0; i < chartConnections[chartId].length; i++) {
+					for(var j =0;j < deselected.val.length;j++){ 
+						propogateDeselectionDownwards(chartConnections[chartId][i], deselected.key, deselected.val[j]);
+					}
+				}
+			}
 		}
 		
 	}
@@ -783,6 +831,7 @@ function onTileSelection(chartId, tile, key1, key2, val1, val2) {
 		} else {
 			var deselected = selected[chartId];
 			delete selected[chartId];
+
 			// Deselect any others that were selected during multiselect
 			if (Object.size(deselected) > 1) {
 				for (var i = 0; i < chartConnections[chartId].length; i++) {
@@ -800,8 +849,6 @@ function onTileSelection(chartId, tile, key1, key2, val1, val2) {
 		var chartId2 = chartConnections[chartId][charti];
 		filterDownstreamChart(chartId, chartId2, key1, val1, isSelected);
 		filterDownstreamChart(chartId, chartId2, key2, val2, isSelected);
-		console.log(isSelected);
-		console.log(filters[chartId2]);
 	}
 
 
@@ -880,11 +927,10 @@ function propogateFiltersDownward(chartId, chartId2, key, val) {
 	//make sure all filters that are applied to upstream chart get applied to downstream chart as well
 	for (var filterKey in filters[chartId]) {
 		//filter[filterKey] = filters[chartId][filterKey];
-		if (filterKey in filter) {
-			filter[filterKey].push(filters[chartId][filterKey]);
-		} else {
-			filter[filterKey] = [filters[chartId][filterKey]];
+		if (! (filterKey in filter)) {
+			filter[filterKey] = [];
 		}
+		filter[filterKey].concat(filters[chartId][filterKey]);
 	}
 
 	if (key in filters[chartId2]) {

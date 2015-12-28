@@ -15,7 +15,7 @@
 * Graph Deletion
 	* Drag body of graph to trash can to delete graph
 
-To execute Vizdom, it should be run within a web server due to javascript file restrictions within D3. A simple way to run a local server with python is the [SimpleHTTPServer module](https://docs.python.org/2/library/basehttpserver.html#BaseHTTPServer.BaseHTTPRequestHandler).
+To execute Vizdom, the project should be run within a web server due to javascript file restrictions within D3. A simple way to run a local server with python is the [SimpleHTTPServer module](https://docs.python.org/2/library/basehttpserver.html#BaseHTTPServer.BaseHTTPRequestHandler).
 
 ## Implementation Details 
 ##### *(last updated 12/13/15 by eweizman)*
@@ -40,6 +40,7 @@ All relevant code is contained within *script.js*.
 #### Graph Creation
 
 Bar graphs are created when a button describing the the graph should be connected to is dragged out onto the canvas. The document body (which is the drop event listener) then creates a new graph with the given key.
+Information is handed to the drag/drop events through the event's *dataTransfer* object.
 Every new graph is made in a new div, with its own svg canvas within it. The id of the div is the id of the chart, which is just "chart" + *#of
 
 #### Data Retrieval 
@@ -81,9 +82,13 @@ There are two types of ways to combine filters - AND and OR. These can be gotten
 Filtering happens in *applyFilters(key, chartId, data, filterKeys)*. Datapoints are excluded by returning 0 to a function passed to d3.sum. Filtering happens per key (i.e. appropriate values are and/or-ed across only their own keys).
 
 ## Extension Tips
-
+Much of 
 
 ## Future Goals
+* Connection to existing Vizdom backend
+* Immediate visualization as the data loads
+* Data analysis and display
+	* Classifiers
 * New chart types
 	* Maps
 
